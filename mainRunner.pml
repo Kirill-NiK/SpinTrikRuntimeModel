@@ -10,7 +10,13 @@
  /* с этими предположениями о миксимальном кол-ве скриптов/тредов надо быть осторожным 256? */
  #define N 1024 
  #define mutex bit
-
+ 
+#ifndef NO_LOGGING
+ #define LOG(x) printf(x)
+#else
+ #define LOG(x)
+#endif
+ 
 int mMaxScriptId = 0; /* поле mMaxScriptId в trikScriptRunner */
 bool fileNameisEmpty = true; /* для файла, передаваемого в запуске TrikScriptRunner::run */
 byte mState = ready; /* ScriptEngineWorker:state -> делать ли его локальным? */
