@@ -12,7 +12,7 @@
 #define lab_a3 Thread3@a3
 #define lab_b1 Thread1@b1
 #define lab_b2 Thread2@b2
-#define lab_b3 Thread3P@b3
+#define lab_b3 Thread3@b3
 #define lab_b21 Thread2@b21
 #define lab_a21 Thread2@a21
 
@@ -32,8 +32,10 @@
 #define d (x == 4)
 #define e (x == 5)
 #define f (x == 6)
-// формула LTL: p = (z -> z U a) && (F a -> a U b) && (F b -> b U c) && (F c -> c U d) && (F d -> d U e) && (F e -> e U f) && <>[]d
-
+// формула LTL: p = z && ((((((((z U a) && X (a U b)) && X (b U c)) && X (c U d)) && X (d U e)) && X (e U b)) && X (b U f)) && X[]d)
+// p = z && ((z U a) && X (a U b) && X (b U c)
+// p = (z && (z U (a && a U (b && b U (c && c U (d && d U (e && e U (b && b U (f && f U ([]d))))))))))
+// (z && (z U (a && a U (b && b U ([]d)))))
 byte x = 0; /* для LTL формулы, эквивалентой замене меток */
 
 mtype {emptyEvent, signal12, signal32}; /* тут можно перечислять все возможные сигналы */
@@ -112,10 +114,89 @@ init
 	emit(eventsThread1, emptyEvent);
 }
 
-/* never
-{
-	do 
-	:: (timeout == true) -> break;
-	:: else -> skip;
-	od
-} */
+never  {    /* (z && (z U (a && a U (b && b U (c && c U (d && d U (e && e U (b && b U (f && f U ([]d)))))))))) */
+T0_init:
+	do
+	:: ((a) && (b) && (c) && (d) && (e) && (f) && (z)) -> goto accept_S219
+	:: ((a) && (b) && (c) && (d) && (e) && (f) && (z)) -> goto T0_S218
+	:: ((a) && (b) && (c) && (d) && (e) && (z)) -> goto T0_S217
+	:: ((a) && (b) && (c) && (d) && (e) && (z)) -> goto T0_S216
+	:: ((a) && (b) && (c) && (d) && (z)) -> goto T0_S215
+	:: ((a) && (b) && (c) && (z)) -> goto T0_S214
+	:: ((a) && (b) && (z)) -> goto T0_S213
+	:: ((a) && (z)) -> goto T0_S212
+	:: ((z)) -> goto T0_S1
+	od;
+accept_S219:
+	do
+	:: ((d)) -> goto accept_S219
+	od;
+T0_S1:
+	do
+	:: ((z)) -> goto T0_S1
+	:: ((a) && (b) && (c) && (d) && (e) && (f)) -> goto accept_S219
+	:: ((a) && (b) && (c) && (d) && (e) && (f)) -> goto T0_S218
+	:: ((a) && (b) && (c) && (d) && (e)) -> goto T0_S217
+	:: ((a) && (b) && (c) && (d) && (e)) -> goto T0_S216
+	:: ((a) && (b) && (c) && (d)) -> goto T0_S215
+	:: ((a) && (b) && (c)) -> goto T0_S214
+	:: ((a) && (b)) -> goto T0_S213
+	:: ((a)) -> goto T0_S212
+	od;
+T0_S218:
+	do
+	:: ((d)) -> goto accept_S219
+	:: ((f)) -> goto T0_S218
+	od;
+T0_S217:
+	do
+	:: ((d) && (f)) -> goto accept_S219
+	:: ((f)) -> goto T0_S218
+	:: ((b)) -> goto T0_S217
+	od;
+T0_S216:
+	do
+	:: ((b) && (d) && (f)) -> goto accept_S219
+	:: ((b) && (f)) -> goto T0_S218
+	:: ((b)) -> goto T0_S217
+	:: ((e)) -> goto T0_S216
+	od;
+T0_S215:
+	do
+	:: ((b) && (d) && (e) && (f)) -> goto accept_S219
+	:: ((b) && (e) && (f)) -> goto T0_S218
+	:: ((b) && (e)) -> goto T0_S217
+	:: ((e)) -> goto T0_S216
+	:: ((d)) -> goto T0_S215
+	od;
+T0_S214:
+	do
+	:: ((b) && (d) && (e) && (f)) -> goto accept_S219
+	:: ((b) && (d) && (e) && (f)) -> goto T0_S218
+	:: ((b) && (d) && (e)) -> goto T0_S217
+	:: ((d) && (e)) -> goto T0_S216
+	:: ((d)) -> goto T0_S215
+	:: ((c)) -> goto T0_S214
+	od;
+T0_S213:
+	do
+	:: ((b) && (c) && (d) && (e) && (f)) -> goto accept_S219
+	:: ((b) && (c) && (d) && (e) && (f)) -> goto T0_S218
+	:: ((b) && (c) && (d) && (e)) -> goto T0_S217
+	:: ((c) && (d) && (e)) -> goto T0_S216
+	:: ((c) && (d)) -> goto T0_S215
+	:: ((c)) -> goto T0_S214
+	:: ((b)) -> goto T0_S213
+	od;
+T0_S212:
+	do
+	:: ((b) && (c) && (d) && (e) && (f)) -> goto accept_S219
+	:: ((b) && (c) && (d) && (e) && (f)) -> goto T0_S218
+	:: ((b) && (c) && (d) && (e)) -> goto T0_S217
+	:: ((b) && (c) && (d) && (e)) -> goto T0_S216
+	:: ((b) && (c) && (d)) -> goto T0_S215
+	:: ((b) && (c)) -> goto T0_S214
+	:: ((b)) -> goto T0_S213
+	:: ((a)) -> goto T0_S212
+	od;
+}
