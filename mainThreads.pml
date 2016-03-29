@@ -1,6 +1,6 @@
 //#define NO_LOGGING // только для QLOG_INFO()
-#define S 5 // максимальное количество запущенных скриптов (engineThreads)
-#define N 10 // максимальная длина очереди event-ов для каждого потока
+#define S 25 // максимальное количество запущенных скриптов (engineThreads)
+#define N 50 // максимальная длина очереди event-ов для каждого потока
 
 #ifndef NO_LOGGING
  #define LOG(x) printf(x)
