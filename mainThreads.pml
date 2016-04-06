@@ -3,7 +3,7 @@
 #define N 50 // максимальная длина очереди event-ов для каждого потока
 
 #ifndef NO_LOGGING
- #define LOG(x) printf(x)
+ #define LOG(x) printf(x); printf("\n")
 #else
  #define LOG(x) skip
 #endif
