@@ -1,0 +1,18 @@
+inline doSmth()
+{
+	byte x = 1; x==1 -> printf("a"); goto aaa;
+	aaa: skip;
+}
+
+init{
+printf("1");
+aaa: true;
+printf("2");
+do
+:: true -> doSmth();
+:: else -> break;
+od;
+printf("3");
+doSmth();
+printf("4");
+}
