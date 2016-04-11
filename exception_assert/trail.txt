@@ -1,0 +1,55 @@
+----------------------------------- Необработанное исключение -----------------------------------------
+------------------------------------------------------------------------------------------------------
+
+Starting ExceptionHandler with pid 1
+  1:	proc  0 (:init::1) mainThreads.pml:567 (state 1)	[(run ExceptionHandler())]
+Starting GUIThread with pid 2
+  2:	proc  0 (:init::1) mainThreads.pml:568 (state 2)	[(run GUIThread())]
+  3:	proc  0 (:init::1) mainThreads.pml:52 (state 3)	[GUIThreadEvents!4]
+  4:	proc  2 (GUIThread:1) mainThreads.pml:495 (state 1)	[GUIThreadEvents?signal]
+  5:	proc  2 (GUIThread:1) mainThreads.pml:497 (state 2)	[((signal==runScript))]
+              TrikGui started  5:	proc  2 (GUIThread:1) mainThreads.pml:498 (state 3)	[printf('TrikGui started')]
+              
+  5:	proc  2 (GUIThread:1) mainThreads.pml:498 (state 4)	[printf('\\n')]
+Starting connectionThread with pid 3
+  6:	proc  2 (GUIThread:1) mainThreads.pml:499 (state 5)	[(run connectionThread())]
+Starting sensorsThread with pid 4
+  7:	proc  2 (GUIThread:1) mainThreads.pml:500 (state 6)	[(run sensorsThread())]
+              Starting TrikScriptRunner worker thread  8:	proc  2 (GUIThread:1) mainThreads.pml:503 (state 7)	[printf('Starting TrikScriptRunner worker thread')]
+              
+  8:	proc  2 (GUIThread:1) mainThreads.pml:503 (state 8)	[printf('\\n')]
+Starting scriptWorkerThread with pid 5
+  9:	proc  2 (GUIThread:1) mainThreads.pml:504 (state 9)	[(run scriptWorkerThread())]
+              TrikScriptRunner: new script 10:	proc  2 (GUIThread:1) mainThreads.pml:506 (state 10)	[printf('TrikScriptRunner: new script')]
+              
+ 10:	proc  2 (GUIThread:1) mainThreads.pml:506 (state 11)	[printf('\\n')]
+ 11:	proc  2 (GUIThread:1) mainThreads.pml:269 (state 12)	[(1)]
+ 12:	proc  2 (GUIThread:1) mainThreads.pml:270 (state 13)	[(1)]
+ 13:	proc  2 (GUIThread:1) mainThreads.pml:273 (state 16)	[((mState==0))]
+ 14:	proc  2 (GUIThread:1) mainThreads.pml:288 (state 108)	[(1)]
+              ScriptEngineWorker: starting script 14:	proc  2 (GUIThread:1) mainThreads.pml:510 (state 110)	[printf('ScriptEngineWorker: starting script')]
+              
+ 14:	proc  2 (GUIThread:1) mainThreads.pml:510 (state 111)	[printf('\\n')]
+ 15:	proc  2 (GUIThread:1) mainThreads.pml:511 (state 112)	[mState = 1]
+ 16:	proc  2 (GUIThread:1) mainThreads.pml:514 (state 113)	[threadId = 0]
+ 
+	/// обнуление массива abortEvaluationInvoked
+
+ 29:	proc  2 (GUIThread:1) mainThreads.pml:52 (state 126)	[scriptWorkerThreadEvents!7]
+ 30:	proc  5 (scriptWorkerThread:1) mainThreads.pml:472 (state 1)	[scriptWorkerThreadEvents?signal]
+ 31:	proc  5 (scriptWorkerThread:1) mainThreads.pml:475 (state 4)	[((signal==INVOKEdoRun))]
+ 
+	/// обнуление массива mFinishedThreads
+	/// обнуление массива mPreventFromStart
+
+ 58:	proc  5 (scriptWorkerThread:1) mainThreads.pml:73 (state 29)	[catch!10]
+ 59:	proc  1 (ExceptionHandler:1) mainThreads.pml:552 (state 1)	[catch?FailedToOpenFileException]
+spin: mainThreads.pml:553, Error: assertion violated
+spin: text of failed assertion: assert(0)
+ 60:	proc  1 (ExceptionHandler:1) mainThreads.pml:553 (state 2)	[assert(0)] //// ->  исключение не обрабатывается
+spin: trail ends after 60 steps
+
+---------------------------------------------------------------------------------------------------------------------------
+--------- Итог: верификатор нашел вычисление, приводящее к непредвиденному выходу из программы. ---------------------------
+--------- Проверка показала, что в реальной систме подобное вычисление возможно, т.е. модель адекватна. -------------------
+---------------------------------------------------------------------------------------------------------------------------
