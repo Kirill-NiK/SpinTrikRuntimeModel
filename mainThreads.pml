@@ -27,7 +27,8 @@ bit mThreads[S] = 0; /* хэш (который мы моделируем как 
 
 short threadId = 0; /* имя треда, для :main: engine thread - 0, нужен только для модели, равен самому левому нулевому значению в mThreads */
 
-mtype {emptyEvent, INVOKEdoRun, completed, start, runScript, abortScript, stopRunning, stopWaiting }; /* используемые сигналы-события для всех потоков, параметры - в глобальные переменные */
+/* ниже используемые сигналы-события для всех потоков, параметры - в глобальные переменные, если необходимо. emptyEvent --- для заглушки */
+mtype {emptyEvent, INVOKEdoRun, completed, start, runScript, abortScript, stopRunning, stopWaiting }; 
 
 /* ниже каналы, моделирующие очередь событий в соответствующих потоках */
 chan GUIThreadEvents = [N] of {mtype};
@@ -324,7 +325,7 @@ inline startThread() /* Threading::startThread(...) --- в этом методе
 	:: else -> skip;
 	fi;
 	if
-	:: (tmp != -1) && (mPreventFromStart[tmp]) -> /* если пытались ранее убить незапущенный тред */
+	:: (tmp != -1) && mPreventFromStart[tmp] -> /* если пытались ранее убить незапущенный тред */
 		LOG("Threading: attempt to create a thread which must be killed");
 		mPreventFromStart[tmp] = 0;
 		mFinishedThreads[tmp] = 1;
@@ -402,12 +403,12 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 	do
 	:: engineThreadEvents[id] ? signal ->
 		if
-		:: signal == emptyEvent -> skip;
 		:: signal == start -> /* ScriptThread::run() */
 			LOG("Started thread ScriptThread");
 			evaluate_call: skip; /* mEngine->evaluate(mScript) */
 			/* скрипт внутри может вызвать новые потоки, убивать... */
 			progress: do /* в данной модели забиваем тут на brick, gamepad, mailbox из createScriptEngine */
+			/* progress в данном месте, так как может быть бесконечный цикл для автоматизированной системы */
 			:: !abortEvaluationInvoked[id] -> /* если не был вызван аборт исполнения скрипта */
 				:: 
 					evalSystemJs();
@@ -471,7 +472,6 @@ proctype scriptWorkerThread()
 	progress: do
 	:: scriptWorkerThreadEvents ? signal ->
 		if 
-	    :: signal == emptyEvent -> skip;
 		:: signal == INVOKEdoRun -> 
 			clear(mFinishedThreads, S);
 			clear(mPreventFromStart, S);
@@ -484,7 +484,6 @@ proctype scriptWorkerThread()
 			LOG("ScriptEngineWorker: evaluation ended with message: empty or error");
 			emit(GUIThreadEvents, completed); /* также данный сигнал посылвает уведомление на виджет, что не важно в данной модели */
 		fi;
-	
 	od;
 }
 
@@ -550,7 +549,7 @@ proctype ExceptionHandler() /* процесс, который моделируе
 	::
 		if
 		:: catch ? FailedToOpenFileException ->
-			assert(false); /* нет обработки */
+			// assert(false); /* нет обработки */
 			catch ! returnControl; /* необходимо для возврата управления в нужной точке */
 		fi;
 	od;
