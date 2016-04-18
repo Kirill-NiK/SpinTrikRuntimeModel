@@ -487,8 +487,8 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 			od;
 			evaluate_return: skip;
 			if /* mEngine->hasUncaughtException() */
-			:: mErrorMessage -> LOG("Uncaught exception at line ..."); // изменили модель, добавив проверку на непустоту mErrorMessage чтоб "поправить ошибку"
-			:: else ->
+			:: true -> LOG("Uncaught exception at line ...");
+			:: true ->
 				if
 				:: mInEventDrivenMode -> 
 					atomic {
