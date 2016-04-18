@@ -644,3 +644,15 @@ init
 	run GUIThread();
 	emit(GUIThreadEvents, runScript);
 }
+
+never  {    /* ![] (q1 -> (<> p1) ) */
+T0_init:
+        do
+        :: (! ((p1)) && (q1)) -> goto accept_S4
+        :: (1) -> goto T0_init
+        od;
+accept_S4:
+        do
+        :: (! ((p1))) -> goto accept_S4
+        od;
+}
