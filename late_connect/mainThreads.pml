@@ -16,9 +16,6 @@
  
 #define mutex bit
 
-/* ниже будут описаны дефайны для LTL-формул */
-#define p GUIThread@showError;
-
 byte mState = ready; /* ScriptEngineWorker:state */
 bool mInEventDrivenMode = false; /* находится в ScriptExecutionControl, True, if a system is in this mode, so it shall wait for events when script is executed. (c) */
 mutex mResetMutex = 1; /* мьютекс для mResetStarted; поскольку все операции с тредами должны быть атомарными */
@@ -424,7 +421,7 @@ inline checkUnhandledSignals(reqSignal, reqQueue)
 			tmpQueue ? temp;
 			reqQueue ! temp;
 		od;
-	};
+	}
 }
 
 proctype sensorsThread() /* на самом деле существует много отдельных потоков для различных сенсоров */

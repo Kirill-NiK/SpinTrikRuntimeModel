@@ -3,6 +3,9 @@ bit a = 1;
 bit x = 0;
 mtype {aaaa, bbbb, cccc};
 mtype {aa, bb, cc};
+
+chan sensorsThreadEvents = [10] of {mtype};
+
 inline random(min, max, x)
 {
 	atomic {
@@ -76,6 +79,17 @@ inline doSmth()
 	aaa: skip;
 }
 
+proctype sensorsThread() /* на самом деде существует много отдельных потоков для различных сенсоров */
+{
+	mtype signal;
+	end: progress: do
+	:: sensorsThreadEvents ? signal ->
+		if
+		:: signal == aaaa -> skip;
+	    fi;
+	od;
+}
+
 init{
 	// run A();
 	//byte y = -1;
@@ -112,13 +126,13 @@ init{
 //printf("3");
 //doSmth();
 //printf("4");
-bit mThreads[256] = 1;
-short tmp = 1;
-if
-:: (tmp == -1) || (!mThreads[tmp])  ->
-	printf("!= -1")
-:: else -> printf("== -1");
-fi;
+//bit mThreads[256] = 1;
+//short tmp = 1;
+//if
+//:: (tmp == -1) || (!mThreads[tmp])  ->
+//	printf("!= -1")
+//:: else -> printf("== -1");
+//fi;
 //mtype f = aa;
 //f++;
 //mtype d = bbbb;
@@ -127,4 +141,13 @@ fi;
 //short x;
 //random(-1, 5, x);
 //!0 -> printf("%d", x);
+do
+::
+	if
+	:: break;
+	:: break;
+	fi;
+od;
+printf("Hellow, world!");
+run sensorsThread();
 }

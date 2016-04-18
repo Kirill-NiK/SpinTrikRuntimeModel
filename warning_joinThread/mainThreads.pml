@@ -1,5 +1,5 @@
 //#define NO_LOGGING // только для QLOG_INFO()
-#define S 3 // максимальное количество запущенных скриптов (engineThreads) S < 256
+#define S 10 // максимальное количество запущенных скриптов (engineThreads) S < 256
 #define N 25 // максимальная длина очереди event-ов для каждого потока N < 256
 
 #ifndef NO_LOGGING
@@ -15,9 +15,6 @@
  #define running 3
  
 #define mutex bit
-
-/* ниже будут описаны дефайны для LTL-формул */
-#define p GUIThread@showError;
 
 byte mState = ready; /* ScriptEngineWorker:state */
 bool mInEventDrivenMode = false; /* находится в ScriptExecutionControl, True, if a system is in this mode, so it shall wait for events when script is executed. (c) */
@@ -49,8 +46,6 @@ byte mThreadCount = 0; /* число engine-потоков */
 
 bool timerTimeout = false; /* флаги, моделирующие ивенетлуп в ScriptExecutionControl::wait */
 bool loopStopWaiting = false; /* флаги, моделирующие ивенетлуп в ScriptExecutionControl::wait */
-
-bool mErrorMessage = false; /* флаг, который будет true, если mErrorMessage в программе непустой */
 
 inline emit(thread, signal) /* в очередь событий \a thread добавить сигнал (событие) \a signal */
 {
@@ -111,7 +106,7 @@ inline abort(thrId) /* ScriptThread::abort() для конкретного на�
 	emit(engineThreadEvents[thrId], stopRunning);
 }
 
-inline joinThread(idT) /* Threading::joinThread(const QString &threadId) */
+inline joinThread() /* Threading::joinThread(const QString &threadId) */
 {
 	true; /* костыль для использования метки в начале inline, взято из официальной документации */
 	joinThread_call: skip;
@@ -133,11 +128,8 @@ inline joinThread(idT) /* Threading::joinThread(const QString &threadId) */
 	:: skip;
 	fi;
 	unlock(mThreadsMutex);
-	if 
-	// вообще, это неаккуратно, вдруг на mThreads[tmp] запишется другой тред, но правка приведет к сильному усложнению модели, поэтому допускаем такое вычисление.
-	:: tmp != idT -> !mThreads[tmp];
-	:: else -> LOG("QThread::wait: Thread tried to wait on itself"); /* данное сообщение выводится не в логе Q_LOG */
-	fi;
+	printf("%d", tmp);
+	!mThreads[tmp]; // вообще, это неаккуратно, вдруг на mThreads[tmp] запишется другой тред, но правка приведет к сильному усложнению модели, поэтому допускаем такое вычисление.
 	joinThread_return: skip;	
 }
 
@@ -166,7 +158,6 @@ inline killThread() /* Threading::killThread(const QString &threadId) */
 	:: else ->
 		LOG("Threading: killing thread ...");
 		/* ScriptThread::abort() */
-		// так как множественный stopRunning не падает в реальной модели, запретим "лишние" emits?
 		abort(tmp);
 	fi;
 	unlock(mThreadsMutex);
@@ -214,12 +205,8 @@ inline script_quit() /* ScriptExecutionControl::quit() */
 	/* два коннекта - с сигналом и слотом */
 	byte runningThread = 0; // можно сделать стоп раннинг в случайном порядке. надо?
 	do /* --- с сигналом, по всем потокам вызываем stopRunning */
-	:: runningThread < S ->
-		if 
-		:: mThreads[runningThread] ->
-			emit(engineThreadEvents[runningThread], stopRunning); 
-		:: else -> skip;
-		fi;
+	:: runningThread < S && mThreads[runningThread] ->
+		emit(engineThreadEvents[runningThread], stopRunning); 
 		runningThread++;
 	:: else -> break;
 	od;
@@ -245,15 +232,11 @@ inline threading_reset() /* Threading::reset() */
 	
 	byte k = 0;
 	do
-	:: k < S -> 
-		if
-		:: mThreads[k] ->
-			script_reset(); /// TODO: find more sophisticated solution to prevent waiting after abortion (c)
-			abort(k);			
-		:: else -> skip;
-		fi;
+	:: k < S && mThreads[k] -> 
+		script_reset(); /// TODO: find more sophisticated solution to prevent waiting after abortion (c)
+		abort(k);
 		k++;
-	:: else -> break;
+	:: k == S -> break;
 	od;
 	
 	clear(mFinishedThreads, S);
@@ -336,7 +319,6 @@ inline startThread() /* Threading::startThread(...) --- в этом методе
 	if 
 	:: (tmp != -1) && (mThreads[tmp]) -> /* если тред такой уже существует */
 		LOG("ERROR: Threading: attempt to create a thread with an already occupied id");
-		mErrorMessage = true;
 		abort(tmp);
 		unlock(mThreadsMutex);
 		unlock(mResetMutex);
@@ -394,7 +376,7 @@ inline evalSystemJs() /* ScriptEngineWorker::evalSystemJs */
 	/* finite cycle removed */
 }
 
-inline removePostedEvents(queue) /* очистить посланные события из очереди событий \a queue */
+inline removePostedEvents(queue)
 {
 	atomic {
 		mtype temp;
@@ -404,33 +386,11 @@ inline removePostedEvents(queue) /* очистить посланные собы
 		od;
 	};
 }
-/* проверяем события \a reqSignal, которые могли быть посланы в \a reqQueue, но каким-то причинам не обработаны, а должны быть */
-inline checkUnhandledSignals(reqSignal, reqQueue) 
-{
-	atomic {
-		mtype temp;
-		do
-		:: empty(reqQueue) -> break;
-		:: nempty(reqQueue) ->
-			reqQueue ? temp;
-			if
-			:: temp == reqSignal -> assert(false);
-			:: else -> tmpQueue ! temp;
-			fi;
-		od;
-		do /* если дошли сюда, значит, мы проверили, что всё ок */
-		:: empty(tmpQueue) -> break;
-		:: nempty(tmpQueue) ->
-			tmpQueue ? temp;
-			reqQueue ! temp;
-		od;
-	};
-}
 
-proctype sensorsThread() /* на самом деле существует много отдельных потоков для различных сенсоров */
+proctype sensorsThread() /* на самом деде существует много отдельных потоков для различных сенсоров */
 {
 	mtype signal;
-	end: progress: do
+	progress: do
 	:: sensorsThreadEvents ? signal ->
 		if
 		:: signal == emptyEvent -> skip;
@@ -441,7 +401,7 @@ proctype sensorsThread() /* на самом деле существует мно
 proctype connectionThread() /* обслуживание клиента TrikCommunicator, обработка сообщений */
 {
 	mtype signal;
-	end: progress: do
+	progress: do
 	:: connectionThreadEvents ? signal ->
 		if
 		:: signal == emptyEvent -> skip;
@@ -451,26 +411,24 @@ proctype connectionThread() /* обслуживание клиента TrikCommu
 
 proctype engineThread(byte id) /* id остаётся одинаковым на всё время жизни треда */
 {
-	chan tmpQueue = [N] of {mtype}; /* необходимый для моделирования и проверок канал */
 	mtype signal;
-	do // возможно, стоит смоделировать без цикла
+	do
 	:: engineThreadEvents[id] ? signal ->
 		if
 		:: signal == start -> /* ScriptThread::run() */
 			LOG("Started thread ScriptThread");
-			evaluate_call: skip; /* mEngine->evaluate(mScript) --- скрипт внутри может вызвать новые потоки, убивать... */
-			assert(!abortEvaluationInvoked[id]); /* аборт исполнения скрипта до самого исполнения может привести к краху программы */
-			/* progress в данном месте, так как может быть бесконечный цикл для автоматизированной системы */
+			evaluate_call: skip; /* mEngine->evaluate(mScript) */
+			/* скрипт внутри может вызвать новые потоки, убивать... */
 			progress: do /* в данной модели забиваем тут на brick, gamepad, mailbox из createScriptEngine */
+			/* progress в данном месте, так как может быть бесконечный цикл для автоматизированной системы */
 			:: !abortEvaluationInvoked[id] -> /* если не был вызван аборт исполнения скрипта */
-				if
 				:: 
 					evalSystemJs();
 					copyRecursivelyTo: skip; /* рекурсивное копирование, знаем, что не бесконечное */
 					evalSystemJs();
-					startThread(); /* параметр моделируем через недетерминизм, кол-во тредов ограничиваем сами или run()-ом */
-				//:: joinThread(id); /* параметр моделируем через недетерминизм */
-				//:: killThread(); /* параметр моделируем через недетерминизм */
+					//startThread(); /* параметр моделируем через недетерминизм, кол-во тредов ограничиваем сами или run()-ом */
+				:: joinThread(); /* параметр моделируем через недетерминизм */
+				:: killThread(); /* параметр моделируем через недетерминизм */
 				// :: sendMessage();
 				// :: receiveMessage();
 				:: script_quit();
@@ -478,7 +436,6 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 				:: script_wait();
 				// WARNING: можно испускать сигналы из ScriptExecutionControl.
 				:: break; /* конец скрипта */
-				fi;
 			:: else -> break;
 			od;
 			evaluate_return: skip;
@@ -487,10 +444,7 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 			::
 				if
 				:: mInEventDrivenMode -> 
-					atomic {
-						checkUnhandledSignals(stopRunning, engineThreadEvents[id]); /* здесь вызывается необходимый коннект, проверим, что эмитов, нужных после, до этого не было */
-						engineThreadEvents[id] ? stopRunning; /* пойдет дальше, если stopRunning был испущен */
-					};
+					engineThreadEvents[id] ? stopRunning; /* пойдет дальше, если stopRunning был испущен */
 				:: else -> skip;
 				fi;
 			fi;
@@ -499,10 +453,6 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 			LOG("Finishing thread ...");
 			lock(mResetMutex);
 			lock(mThreadsMutex);
-			if
-			:: mErrorMessage = true; /* в таком случае мы можем не показать важную ошибку. если она произошла в другом потоке */
-			:: skip;
-			fi;
 			LOG("Thread ... has finished, thread object ...");
 			atomic {
 				mThreads[id] = 0; 
@@ -517,7 +467,7 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 			unlock(mThreadsMutex);
 			unlock(mResetMutex);
 			if /* !mErrorMessage.isEmpty() */
-			:: mErrorMessage -> threading_reset();
+			:: threading_reset();
 			:: skip;
 			fi;
 			LOG("Ended evaluation, thread ...");
@@ -533,11 +483,10 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 proctype scriptWorkerThread()
 {
 	mtype signal;
-	end: progress: do /* end, так как mWorkerThread удаляется при закрытии всей программы */
+	progress: do
 	:: scriptWorkerThreadEvents ? signal ->
 		if 
-		:: signal == INVOKEdoRun ->
-			mErrorMessage = false;
+		:: signal == INVOKEdoRun -> 
 			clear(mFinishedThreads, S);
 			clear(mPreventFromStart, S);
 			evalSystemJs();
@@ -547,7 +496,7 @@ proctype scriptWorkerThread()
 			mThreadCount == 0 -> /* нужно понимать, что удаляется тред, испуская finished() чуть позже изменения числа тредов и хэша */
 			waitForAll_return: skip;
 			LOG("ScriptEngineWorker: evaluation ended with message: empty or error");
-			emit(GUIThreadEvents, completed); /* также данный сигнал посылвает уведомление на виджет, что мы смоделируем косвенно в GUIThread */
+			emit(GUIThreadEvents, completed); /* также данный сигнал посылвает уведомление на виджет, что не важно в данной модели */
 		fi;
 	od;
 }
@@ -555,7 +504,7 @@ proctype scriptWorkerThread()
 proctype GUIThread()
 {
 	mtype signal;
-	end: progress: do /* end и progress - так как считаем, что программа всегда работает и не выключается */
+	progress: do
 	:: GUIThreadEvents ? signal -> /* расписываем ВСЕ возможные сигналы для каждого потока */
 		if
 		:: signal == runScript -> 
@@ -580,12 +529,6 @@ proctype GUIThread()
 				emit(scriptWorkerThreadEvents, INVOKEdoRun);
 			};
 		:: signal == completed ->
-			/* моделируем в следующих 4 строчках сигнал showError(...) */
-			if
-			:: mErrorMessage -> showError: skip; // ВНИМАНИЕ: добавить проверку, что всегда если mErrorMessage-><>showError@GUIThread;
-			:: else -> skip;
-			fi;
-			
 			if
 			:: true -> hideRunningWidgetSignal: skip;
 			:: true -> sendMessages: skip; showErrorSignal: skip; /* по всем открытым соединениям вещается об ошибке */
@@ -607,7 +550,7 @@ proctype GUIThread()
 
 proctype User() /* процесс, который моделирует возможные вызовы методов в trikScriptRunner */
 {
-	end: progress: do
+	progress: do
 	:: emit(GUIThreadEvents, runScript); // точно ли надо через эмиты? может, глобальные переменные - как доставляется сигнал? и подумать, надо ли возвращаться к дефолтным значениям.
 	:: emit(GUIThreadEvents, abortScript);
 	od
@@ -616,12 +559,12 @@ proctype User() /* процесс, который моделирует возм�
 proctype ExceptionHandler() /* процесс, который моделирует обработку исключений */
 /* второй способ моделирования --- переходить по меткам goto внутри proctype */
 {
-	end: progress: do
+	progress: do
 	::
 		if
 		:: catch ? FailedToOpenFileException ->
 			// assert(false); /* нет обработки */
-			catch ! returnControl; /* необходимо для возврата управления в нужную точку программы */
+			catch ! returnControl; /* необходимо для возврата управления в нужной точке */
 		fi;
 	od;
 }
