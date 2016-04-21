@@ -1,5 +1,5 @@
 //#define NO_LOGGING // только для QLOG_INFO()
-#define S 3 // максимальное количество запущенных скриптов (engineThreads) S < 256
+#define S 2 // максимальное количество запущенных скриптов (engineThreads) S < 256
 #define N 4 // максимальная длина очереди event-ов для каждого потока N < 256
 
 #ifndef NO_LOGGING
@@ -19,6 +19,11 @@
 /* ниже будут описаны дефайны для LTL-формул */
 #define p1 GUIThread@showError
 #define q1 mErrorMessage
+/* определяемые ниже метки для проверки необходимого свойства нужно проверить снова при расширении модели User-ом */
+#define p2 scriptWorkerThread@doRunInvoked
+#define q2 scriptWorkerThread@completedEmitted
+/* r2 можно переделать, но для S==2 пойдет */
+#define r2 (isAutonomousCycle[0] || isAutonomousCycle[1])
 
 byte mState = ready; /* ScriptEngineWorker:state */
 bool mInEventDrivenMode = false; /* находится в ScriptExecutionControl, True, if a system is in this mode, so it shall wait for events when script is executed. (c) */
@@ -53,6 +58,9 @@ bool loopStopWaiting = false; /* флаги, моделирующие ивене
 
 bool mErrorMessage = false; /* флаг, который будет true, если mErrorMessage в программе непустой */
 
+bool isAutonomousCycle[S] = false; /* массив флагов, сигнализирующий, что какой-то из потоков может находиться в бесконечном цикле ожидания */
+//bool autonomousCycleExists = false; /
+
 inline emit(thread, signal) /* в очередь событий \a thread добавить сигнал (событие) \a signal */
 {
 	//assert(nfull(thread)); /* Если копятся ивенты, значит что-то пошло не так... */
@@ -70,7 +78,7 @@ inline lock(_s) /* блокировка мьютекса */
 inline unlock(_s) /* разблокировка мьютекса */
 {
 	atomic {
-		assert(_s == 0); /* из документации Qt --- неопредленное поведение или ошибка */
+		assert(_s == 0); /* из документации Qt --- неопределенное поведение или ошибка */
 		_s++;
 	};
 }
@@ -119,7 +127,7 @@ inline joinThread(idT) /* Threading::joinThread(const QString &threadId) */
 	short tmp;
 	random(-1, S - 1, tmp);
 	lock(mThreadsMutex);
-	do // проверить правильность составления цикла!
+	do // возможно, цикл затратный.
 	:: /* длинное условие, которое, возможно, потребуется явно прописать тут, для более адекватной модели */
 		unlock(mThreadsMutex);
 		if 
@@ -127,7 +135,7 @@ inline joinThread(idT) /* Threading::joinThread(const QString &threadId) */
 		:: else -> skip;
 		fi;
 		lock(mThreadsMutex);
-	:: (tmp != -1) -> break; /* крутимся цикле, пока не будет reset-а */
+	:: (tmp != -1) -> break; /* крутимся цикле, пока не будет reset-а при t == -1 */
 	od;
 	if /* mFinishedThreads.contains(threadId) */
 	:: unlock(mThreadsMutex); goto joinThread_return;
@@ -469,16 +477,16 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 			progress: do /* в данной модели забиваем тут на brick, gamepad, mailbox из createScriptEngine */
 			:: !abortEvaluationInvoked[id] -> /* если не был вызван аборт исполнения скрипта */
 				if
-				:: 
-					evalSystemJs();
-					copyRecursivelyTo: skip; /* рекурсивное копирование, знаем, что не бесконечное */
-					evalSystemJs();
-					startThread(); /* параметр моделируем через недетерминизм, кол-во тредов ограничиваем сами или run()-ом */
-				:: joinThread(id); /* параметр моделируем через недетерминизм */
-				:: killThread(); /* параметр моделируем через недетерминизм */
+				//:: 
+				//	evalSystemJs();
+				//	copyRecursivelyTo: skip; /* рекурсивное копирование, знаем, что не бесконечное */
+				//	evalSystemJs();
+				//	startThread(); /* параметр моделируем через недетерминизм, кол-во тредов ограничиваем сами или run()-ом */
+				//:: joinThread(id); /* параметр моделируем через недетерминизм */
+				//:: killThread(); /* параметр моделируем через недетерминизм */
 				// :: sendMessage();
 				// :: receiveMessage();
-				:: script_quit();
+				//:: script_quit();
 				:: script_run();
 				//:: script_wait(); // вообще можно проверить свойства, что в скрипте можно написать хрень, из-за которой что-то произойдет O_o
 				// WARNING: можно испускать сигналы из ScriptExecutionControl.
@@ -494,7 +502,7 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 				:: mInEventDrivenMode -> 
 					atomic {
 						checkUnhandledSignals(stopRunning, engineThreadEvents[id]); /* здесь вызывается необходимый коннект, проверим, что эмитов, нужных после, до этого не было */
-						engineThreadEvents[id] ? stopRunning; /* пойдет дальше, если stopRunning был испущен */
+						isAutonomousCycle[id] = true; engineThreadEvents[id] ? stopRunning; isAutonomousCycle[id] = false; /* пойдет дальше, если stopRunning был испущен */
 					};
 				:: else -> skip;
 				fi;
@@ -542,9 +550,12 @@ proctype scriptWorkerThread()
 	:: scriptWorkerThreadEvents ? signal ->
 		if 
 		:: signal == INVOKEdoRun ->
-			mErrorMessage = false;
+			doRunInvoked: mErrorMessage = false;
 			clear(mFinishedThreads, S);
 			clear(mPreventFromStart, S);
+			timerTimeout = false; /* не забываем скинуть в начальное состояние все флаги в модели на момент исполнения */
+			loopStopWaiting = false; /* не забываем скинуть в начальное состояние все флаги в модели на момент исполнения */
+			clear(isAutonomousCycle, S); /* не забываем скинуть в начальное состояние все флаги в модели на момент исполнения */
 			evalSystemJs();
 			startThread();
 			mState = running;
@@ -552,7 +563,7 @@ proctype scriptWorkerThread()
 			mThreadCount == 0 -> /* нужно понимать, что удаляется тред, испуская finished() чуть позже изменения числа тредов и хэша */
 			waitForAll_return: skip;
 			LOG("ScriptEngineWorker: evaluation ended with message: empty or error");
-			emit(GUIThreadEvents, completed); /* также данный сигнал посылвает уведомление на виджет, что мы смоделируем косвенно в GUIThread */
+			completedEmitted: emit(GUIThreadEvents, completed); /* также данный сигнал посылвает уведомление на виджет, что мы смоделируем косвенно в GUIThread */
 		fi;
 	od;
 }
@@ -644,4 +655,22 @@ init
 	run ExceptionHandler();
 	run GUIThread();
 	emit(GUIThreadEvents, runScript);
+}
+
+never  {    /* ![](p2-><>q2 || <>[]r2) */
+T0_init:
+        do
+        :: (! ((q2)) && ! ((r2)) && (p2)) -> goto accept_S4
+        :: (! ((q2)) && (p2)) -> goto T0_S4
+        :: (1) -> goto T0_init
+        od;
+accept_S4:
+        do
+        :: (! ((q2))) -> goto T0_S4
+        od;
+T0_S4:
+        do
+        :: (! ((q2)) && ! ((r2))) -> goto accept_S4
+        :: (! ((q2))) -> goto T0_S4
+        od;
 }
