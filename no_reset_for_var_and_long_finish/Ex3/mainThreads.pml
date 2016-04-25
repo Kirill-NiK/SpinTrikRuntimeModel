@@ -511,20 +511,20 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 		progress: do /* в данной модели забиваем тут на brick, gamepad, mailbox из createScriptEngine */
 		:: !abortEvaluationInvoked[id] -> /* если не был вызван аборт исполнения скрипта */
 			if
-			::	//mThreadCount < S ->
+			::	mThreadCount < S ->
 				evalSystemJs();
 				copyRecursivelyTo: skip; /* рекурсивное копирование, _знаем_, что не бесконечное */
 				evalSystemJs();
 				startThread(); /* параметр моделируем через недетерминизм, кол-во тредов ограничиваем сами или run()-ом */
-			:: joinThread(id); /* параметр моделируем через недетерминизм */
-			:: killThread(); /* параметр моделируем через недетерминизм */
+			//:: joinThread(id); /* параметр моделируем через недетерминизм */
+			//:: killThread(); /* параметр моделируем через недетерминизм */
 			// :: sendMessage();
 			// :: receiveMessage();
-			:: script_quit();
-			:: script_run();
-			:: script_wait(); // вообще можно проверить свойства, что в скрипте можно написать хрень, из-за которой что-то произойдет O_o
+			// :: script_quit();
+			//:: script_run();
+			//:: script_wait(); // вообще можно проверить свойства, что в скрипте можно написать хрень, из-за которой что-то произойдет O_o
 			// WARNING: можно испускать сигналы из ScriptExecutionControl.
-			:: mErrorMessage = true; break; /* непредвиденная ошибка */ // в таком случае мы можем не показать важную ошибку, если она произошла в другом потоке
+			// :: mErrorMessage = true; break; /* непредвиденная ошибка */ // в таком случае мы можем не показать важную ошибку, если она произошла в другом потоке
 			:: break; /* конец скрипта */
 			fi;
 		:: else -> break;
@@ -580,6 +580,8 @@ proctype scriptWorkerThread()
 	:: scriptWorkerThreadEvents ? signal ->
 		if 
 		:: signal == INVOKEdoRun ->
+			//assert(mResetMutex);
+			//assert(mThreadsMutex);
 			assert(!mInEventDrivenMode); /* mInEventDrivenMode должен быть false для нового скрипта! аналогично можно проверить с помощью LTL для всех переменных */
 			doRunInvoked: mErrorMessage = false;
 			clear(mFinishedThreads, S);

@@ -1,0 +1,362 @@
+-----------------------------------------------------------------------------
+------------- mInEventDrivenMode == true для пустого скрипта ----------------
+-----------------------------------------------------------------------------
+
+using statement merging
+Starting ExceptionHandler with pid 1
+  1:	proc  0 (:init::1) mainThreads.pml:702 (state 1)	[(run ExceptionHandler())]
+Starting GUIThread with pid 2
+  2:	proc  0 (:init::1) mainThreads.pml:703 (state 2)	[(run GUIThread())]
+              TrikGui started  3:	proc  2 (GUIThread:1) mainThreads.pml:612 (state 1)	[printf('TrikGui started')]
+              
+  3:	proc  2 (GUIThread:1) mainThreads.pml:612 (state 2)	[printf('\\n')]
+Starting User with pid 3
+  4:	proc  0 (:init::1) mainThreads.pml:704 (state 3)	[(run User())]								
+  5:	proc  3 (User:1) mainThreads.pml:83 (state 1)	[(1)]
+  6:	proc  3 (User:1) mainThreads.pml:84 (state 2) <valid end state>	[GUIThreadEvents!5]		//// User посылает сигнал запуска (например, через нажатие кнопки)
+  7:	proc  3 (User:1) mainThreads.pml:83 (state 9)	[(1)]
+  8:	proc  2 (GUIThread:1) mainThreads.pml:613 (state 3)	[mInEventDrivenMode = 0]
+  9:	proc  2 (GUIThread:1) mainThreads.pml:614 (state 4)	[RunningWidget = 0]
+              Starting TrikScriptRunner worker thread 10:	proc  2 (GUIThread:1) mainThreads.pml:620 (state 5)	[printf('Starting TrikScriptRunner worker thread')]
+              
+ 10:	proc  2 (GUIThread:1) mainThreads.pml:620 (state 6)	[printf('\\n')]
+Starting scriptWorkerThread with pid 4
+ 11:	proc  2 (GUIThread:1) mainThreads.pml:622 (state 7)	[(run scriptWorkerThread())]
+ 12:	proc  2 (GUIThread:1) mainThreads.pml:623 (state 8)	[mResetStarted = 0]
+ 12:	proc  2 (GUIThread:1) mainThreads.pml:624 (state 9)	[mState = 0]
+ 13:	proc  3 (User:1) mainThreads.pml:84 (state 10) <valid end state>	[GUIThreadEvents!5]		//// User посылает второй сигнал на запуск скрипта (например, через комп)
+ 14:	proc  2 (GUIThread:1) mainThreads.pml:627 (state 11)	[GUIThreadEvents?signal]
+ 15:	proc  2 (GUIThread:1) mainThreads.pml:629 (state 12)	[((signal==runScript))]
+              TrikScriptRunner: new script 15:	proc  2 (GUIThread:1) mainThreads.pml:631 (state 13)	[printf('TrikScriptRunner: new script')]
+              
+ 15:	proc  2 (GUIThread:1) mainThreads.pml:631 (state 14)	[printf('\\n')]
+ 16:	proc  2 (GUIThread:1) mainThreads.pml:331 (state 15)	[(1)]
+ 17:	proc  2 (GUIThread:1) mainThreads.pml:332 (state 16)	[(1)]
+ 18:	proc  2 (GUIThread:1) mainThreads.pml:335 (state 19)	[((mState==0))]
+ 19:	proc  2 (GUIThread:1) mainThreads.pml:350 (state 128)	[(1)]
+              ScriptEngineWorker: starting script 19:	proc  2 (GUIThread:1) mainThreads.pml:635 (state 130)	[printf('ScriptEngineWorker: starting script')]
+              
+ 19:	proc  2 (GUIThread:1) mainThreads.pml:635 (state 131)	[printf('\\n')]
+ 20:	proc  2 (GUIThread:1) mainThreads.pml:636 (state 132)	[mState = 1]		//// mState = starting; в потоке GUI	
+ 21:	proc  2 (GUIThread:1) mainThreads.pml:639 (state 133)	[RunningWidget = 1]
+ 22:	proc  2 (GUIThread:1) mainThreads.pml:640 (state 134)	[(1)]
+ 23:	proc  2 (GUIThread:1) mainThreads.pml:643 (state 136)	[threadId = 0]
+ 24:	proc  2 (GUIThread:1) mainThreads.pml:221 (state 137)	[assert((2>0))]
+ 24:	proc  2 (GUIThread:1) mainThreads.pml:223 (state 138)	[i = 0]
+ 25:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 139)	[((i<2))]
+ 25:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 140)	[abortEvaluationInvoked[i] = 0]
+ 25:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 141)	[i = (i+1)]
+ 26:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 139)	[((i<2))]
+ 26:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 140)	[abortEvaluationInvoked[i] = 0]
+ 26:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 141)	[i = (i+1)]
+ 27:	proc  2 (GUIThread:1) mainThreads.pml:225 (state 142)	[((i==2))]
+ 28:	proc  2 (GUIThread:1) mainThreads.pml:83 (state 149)	[(1)]
+ 29:	proc  2 (GUIThread:1) mainThreads.pml:84 (state 150) <valid end state>	[scriptWorkerThreadEvents!8]
+ 30:	proc  4 (scriptWorkerThread:1) mainThreads.pml:579 (state 1)	[scriptWorkerThreadEvents?signal]
+ 31:	proc  4 (scriptWorkerThread:1) mainThreads.pml:581 (state 2)	[((signal==INVOKEdoRun))]
+ 32:	proc  4 (scriptWorkerThread:1) mainThreads.pml:584 (state 3)	[assert(!(mInEventDrivenMode))]
+ 33:	proc  4 (scriptWorkerThread:1) mainThreads.pml:585 (state 4)	[mErrorMessage = 0]
+ 34:	proc  4 (scriptWorkerThread:1) mainThreads.pml:221 (state 5)	[assert((2>0))]
+ 34:	proc  4 (scriptWorkerThread:1) mainThreads.pml:223 (state 6)	[i = 0]
+ 35:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 7)	[((i<2))]
+ 35:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 8)	[mFinishedThreads[i] = 0]
+ 35:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 9)	[i = (i+1)]
+ 36:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 7)	[((i<2))]
+ 36:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 8)	[mFinishedThreads[i] = 0]
+ 36:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 9)	[i = (i+1)]
+ 37:	proc  4 (scriptWorkerThread:1) mainThreads.pml:225 (state 10)	[((i==2))]
+ 38:	proc  4 (scriptWorkerThread:1) mainThreads.pml:223 (state 14)	[break]
+ 39:	proc  4 (scriptWorkerThread:1) mainThreads.pml:221 (state 17)	[assert((2>0))]
+ 39:	proc  4 (scriptWorkerThread:1) mainThreads.pml:223 (state 18)	[i = 0]
+ 40:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 19)	[((i<2))]
+ 40:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 20)	[mPreventFromStart[i] = 0]
+ 40:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 21)	[i = (i+1)]
+ 41:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 19)	[((i<2))]
+ 41:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 20)	[mPreventFromStart[i] = 0]
+ 41:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 21)	[i = (i+1)]
+ 42:	proc  4 (scriptWorkerThread:1) mainThreads.pml:225 (state 22)	[((i==2))]
+ 43:	proc  4 (scriptWorkerThread:1) mainThreads.pml:223 (state 26)	[break]
+ 44:	proc  4 (scriptWorkerThread:1) mainThreads.pml:588 (state 29)	[timerTimeout = 0]
+ 45:	proc  4 (scriptWorkerThread:1) mainThreads.pml:589 (state 30)	[loopStopWaiting = 0]
+ 46:	proc  4 (scriptWorkerThread:1) mainThreads.pml:221 (state 31)	[assert((2>0))]
+ 46:	proc  4 (scriptWorkerThread:1) mainThreads.pml:223 (state 32)	[i = 0]
+ 47:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 33)	[((i<2))]
+ 47:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 34)	[isAutonomousCycle[i] = 0]
+ 47:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 35)	[i = (i+1)]
+ 48:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 33)	[((i<2))]
+ 48:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 34)	[isAutonomousCycle[i] = 0]
+ 48:	proc  4 (scriptWorkerThread:1) mainThreads.pml:224 (state 35)	[i = (i+1)]
+ 49:	proc  4 (scriptWorkerThread:1) mainThreads.pml:225 (state 36)	[((i==2))]
+ 50:	proc  4 (scriptWorkerThread:1) mainThreads.pml:223 (state 40)	[break]					//// вверху была куча стандартный чисток
+ 51:	proc  4 (scriptWorkerThread:1) mainThreads.pml:110 (state 43)	[catch!11]
+ 52:	proc  1 (ExceptionHandler:1) mainThreads.pml:688 (state 1)	[catch?FailedToOpenFileException]
+ 53:	proc  2 (GUIThread:1) mainThreads.pml:627 (state 11)	[GUIThreadEvents?signal]
+ 54:	proc  2 (GUIThread:1) mainThreads.pml:629 (state 12)	[((signal==runScript))]			//// внезапно вызывается второй скрипт (processing new event)
+              TrikScriptRunner: new script 54:	proc  2 (GUIThread:1) mainThreads.pml:631 (state 13)	[printf('TrikScriptRunner: new script')]
+              
+ 54:	proc  2 (GUIThread:1) mainThreads.pml:631 (state 14)	[printf('\\n')]
+ 55:	proc  2 (GUIThread:1) mainThreads.pml:331 (state 15)	[(1)]
+ 56:	proc  2 (GUIThread:1) mainThreads.pml:332 (state 16)	[(1)]
+ 57:	proc  2 (GUIThread:1) mainThreads.pml:337 (state 23)	[((mState==1))]		////  дело пахнет жареным. был вызвван stopScript, он попадает на ожидание
+ 58:	proc  1 (ExceptionHandler:1) mainThreads.pml:690 (state 2)	[catch!returnControl]
+ 59:	proc  4 (scriptWorkerThread:1) mainThreads.pml:431 (state 45)	[catch?returnControl]	//// а скрипт engine продолжает создавать скрипты
+ 60:	proc  4 (scriptWorkerThread:1) mainThreads.pml:435 (state 49)	[(1)]
+ 61:	proc  4 (scriptWorkerThread:1) mainThreads.pml:365 (state 59)	[(1)]
+ 62:	proc  4 (scriptWorkerThread:1) mainThreads.pml:366 (state 60)	[(1)]
+ 62:	proc  4 (scriptWorkerThread:1) mainThreads.pml:368 (state 61)	[tmp = 0]
+ 63:	proc  4 (scriptWorkerThread:1) mainThreads.pml:116 (state 62)	[assert((-(1)<=(2-1)))]
+ 63:	proc  4 (scriptWorkerThread:1) mainThreads.pml:117 (state 63)	[tmp = -(1)]
+ 64:	proc  4 (scriptWorkerThread:1) mainThreads.pml:119 (state 64)	[((tmp<(2-1)))]
+ 65:	proc  4 (scriptWorkerThread:1) mainThreads.pml:121 (state 65)	[goto :b14]
+ 66:	proc  4 (scriptWorkerThread:1) mainThreads.pml:118 (state 73)	[break]
+ 67:	proc  4 (scriptWorkerThread:1) mainThreads.pml:90 (state 76)	[assert(mutexInfo[0].forThread[_pid])]
+ 68:	proc  4 (scriptWorkerThread:1) mainThreads.pml:91 (state 77)	[((mResetMutex==1))]
+ 68:	proc  4 (scriptWorkerThread:1) mainThreads.pml:92 (state 78)	[mutexInfo[0].forThread[_pid] = 0]
+ 68:	proc  4 (scriptWorkerThread:1) mainThreads.pml:93 (state 79)	[mResetMutex = (mResetMutex-1)]
+ 69:	proc  4 (scriptWorkerThread:1) mainThreads.pml:376 (state 93)	[else]
+ 70:	proc  4 (scriptWorkerThread:1) mainThreads.pml:376 (state 94)	[(1)]
+ 71:	proc  4 (scriptWorkerThread:1) mainThreads.pml:90 (state 97)	[assert(mutexInfo[1].forThread[_pid])]
+ 72:	proc  4 (scriptWorkerThread:1) mainThreads.pml:91 (state 98)	[((mThreadsMutex==1))]
+ 72:	proc  4 (scriptWorkerThread:1) mainThreads.pml:92 (state 99)	[mutexInfo[1].forThread[_pid] = 0]
+ 72:	proc  4 (scriptWorkerThread:1) mainThreads.pml:93 (state 100)	[mThreadsMutex = (mThreadsMutex-1)]
+ 73:	proc  4 (scriptWorkerThread:1) mainThreads.pml:387 (state 125)	[else]
+ 74:	proc  4 (scriptWorkerThread:1) mainThreads.pml:387 (state 126)	[(1)]
+ 75:	proc  4 (scriptWorkerThread:1) mainThreads.pml:397 (state 147)	[else]
+ 76:	proc  4 (scriptWorkerThread:1) mainThreads.pml:397 (state 148)	[(1)]
+                      Starting new thread ... with engine ... 76:	proc  4 (scriptWorkerThread:1) mainThreads.pml:399 (state 151)	[printf('Starting new thread ... with engine ...')]
+                      
+ 76:	proc  4 (scriptWorkerThread:1) mainThreads.pml:399 (state 152)	[printf('\\n')]
+ 76:	proc  4 (scriptWorkerThread:1) mainThreads.pml:401 (state 153)	[myThread = 0]
+ 77:	proc  4 (scriptWorkerThread:1) mainThreads.pml:404 (state 168)	[((threadId!=-(1)))]
+ 78:	proc  4 (scriptWorkerThread:1) mainThreads.pml:404 (state 169)	[(1)]
+ 78:	proc  4 (scriptWorkerThread:1) mainThreads.pml:406 (state 172)	[myThread = threadId]
+ 78:	proc  4 (scriptWorkerThread:1) mainThreads.pml:407 (state 173)	[mThreads[myThread] = 1]
+ 78:	proc  4 (scriptWorkerThread:1) mainThreads.pml:408 (state 174)	[abortEvaluationInvoked[myThread] = 0]
+ 78:	proc  4 (scriptWorkerThread:1) mainThreads.pml:409 (state 175)	[mThreadCount = (mThreadCount+1)]
+ 78:	proc  4 (scriptWorkerThread:1) mainThreads.pml:410 (state 176)	[assert((mThreadCount<=2))]
+ 78:	proc  4 (scriptWorkerThread:1) mainThreads.pml:411 (state 177)	[assert((mThreadCount>=1))]
+ 79:	proc  4 (scriptWorkerThread:1) mainThreads.pml:356 (state 178)	[i = 0]
+ 80:	proc  4 (scriptWorkerThread:1) mainThreads.pml:357 (state 179)	[(((i<2)&&mThreads[i]))]
+ 80:	proc  4 (scriptWorkerThread:1) mainThreads.pml:357 (state 180)	[i = (i+1)]
+ 81:	proc  4 (scriptWorkerThread:1) mainThreads.pml:358 (state 181)	[(((i<2)&&!(mThreads[i])))]
+ 81:	proc  4 (scriptWorkerThread:1) mainThreads.pml:358 (state 182)	[threadId = i]
+ 82:	proc  4 (scriptWorkerThread:1) mainThreads.pml:356 (state 189)	[break]
+ 83:	proc  4 (scriptWorkerThread:1) mainThreads.pml:414 (state 192)	[mFinishedThreads[myThread] = 0]
+ 84:	proc  4 (scriptWorkerThread:1) mainThreads.pml:101 (state 193)	[assert((mThreadsMutex==0))]
+ 84:	proc  4 (scriptWorkerThread:1) mainThreads.pml:102 (state 194)	[assert(!(mutexInfo[1].forThread[_pid]))]
+ 84:	proc  4 (scriptWorkerThread:1) mainThreads.pml:103 (state 195)	[mutexInfo[1].forThread[_pid] = 1]
+ 84:	proc  4 (scriptWorkerThread:1) mainThreads.pml:104 (state 196)	[mThreadsMutex = (mThreadsMutex+1)]
+Starting engineThread with pid 5
+ 85:	proc  4 (scriptWorkerThread:1) mainThreads.pml:416 (state 199)	[(run engineThread(myThread))]
+ 86:	proc  4 (scriptWorkerThread:1) mainThreads.pml:83 (state 200)	[(1)]
+ 87:	proc  4 (scriptWorkerThread:1) mainThreads.pml:84 (state 201) <valid end state>	[engineThreadEvents[myThread]!6]
+                      Threading: started thread ... with engine ... thread object ... 88:	proc  4 (scriptWorkerThread:1) mainThreads.pml:420 (state 203)	[printf('Threading: started thread ... with engine ... thread object ...')]
+                      
+ 88:	proc  4 (scriptWorkerThread:1) mainThreads.pml:420 (state 204)	[printf('\\n')]
+ 89:	proc  5 (engineThread:1) mainThreads.pml:502 (state 1)	[engineThreadEvents[id]?signal]
+ 90:	proc  5 (engineThread:1) mainThreads.pml:504 (state 2)	[((signal==start))]			//// наконец-то запускаем run() для потока скрипта
+                          Started thread ScriptThread 90:	proc  5 (engineThread:1) mainThreads.pml:505 (state 3)	[printf('Started thread ScriptThread')]
+                          
+ 90:	proc  5 (engineThread:1) mainThreads.pml:505 (state 4)	[printf('\\n')]
+ 91:	proc  5 (engineThread:1) mainThreads.pml:506 (state 5)	[(1)]
+ 92:	proc  5 (engineThread:1) mainThreads.pml:511 (state 6)	[(!(abortEvaluationInvoked[id]))]
+ 93:	proc  5 (engineThread:1) mainThreads.pml:232 (state 93)	[mInEventDrivenMode = 1]	//// script.run();
+ 94:	proc  5 (engineThread:1) mainThreads.pml:511 (state 6)	[(!(abortEvaluationInvoked[id]))]
+ 95:	proc  4 (scriptWorkerThread:1) mainThreads.pml:101 (state 205)	[assert((mResetMutex==0))]
+ 95:	proc  4 (scriptWorkerThread:1) mainThreads.pml:102 (state 206)	[assert(!(mutexInfo[0].forThread[_pid]))]
+ 95:	proc  4 (scriptWorkerThread:1) mainThreads.pml:103 (state 207)	[mutexInfo[0].forThread[_pid] = 1]
+ 95:	proc  4 (scriptWorkerThread:1) mainThreads.pml:104 (state 208)	[mResetMutex = (mResetMutex+1)]
+ 96:	proc  4 (scriptWorkerThread:1) mainThreads.pml:422 (state 211)	[(1)]	//// startThread_return
+ 97:	proc  5 (engineThread:1) mainThreads.pml:232 (state 93)	[mInEventDrivenMode = 1]	//// script.run();
+ 98:	proc  4 (scriptWorkerThread:1) mainThreads.pml:593 (state 213)	[mState = 3]		//// mState = running; вроде бы логично, но мы когда-то во втором запуске GUIThread меняли mState...
+ 99:	proc  4 (scriptWorkerThread:1) mainThreads.pml:594 (state 214)	[(1)]
+100:	proc  5 (engineThread:1) mainThreads.pml:511 (state 6)	[(!(abortEvaluationInvoked[id]))]
+101:	proc  2 (GUIThread:1) mainThreads.pml:337 (state 24)	[((mState!=1))]			//// выходим из цикла
+              ScriptEngineWorker: stopping script102:	proc  2 (GUIThread:1) mainThreads.pml:341 (state 29)	[printf('ScriptEngineWorker: stopping script')]
+              
+102:	proc  2 (GUIThread:1) mainThreads.pml:341 (state 30)	[printf('\\n')]
+103:	proc  5 (engineThread:1) mainThreads.pml:232 (state 93)	[mInEventDrivenMode = 1]		//// script_run
+104:	proc  2 (GUIThread:1) mainThreads.pml:342 (state 31)	[mState = 2]			//// mState = stopping;
+105:	proc  5 (engineThread:1) mainThreads.pml:511 (state 6)	[(!(abortEvaluationInvoked[id]))]
+106:	proc  2 (GUIThread:1) mainThreads.pml:248 (state 32)	[mInEventDrivenMode = 0]	//// script_reset в stopScript()
+107:	proc  5 (engineThread:1) mainThreads.pml:232 (state 93)	[mInEventDrivenMode = 1]		//// script_run
+108:	proc  5 (engineThread:1) mainThreads.pml:511 (state 6)	[(!(abortEvaluationInvoked[id]))]
+109:	proc  5 (engineThread:1) mainThreads.pml:526 (state 99)	[mErrorMessage = 1]			/* непредвиденная ошибка */
+110:	proc  5 (engineThread:1) mainThreads.pml:531 (state 109)	[(1)]
+111:	proc  5 (engineThread:1) mainThreads.pml:533 (state 110)	[(mErrorMessage)]
+                          Uncaught exception at line ...112:	proc  5 (engineThread:1) mainThreads.pml:533 (state 111)	[printf('Uncaught exception at line ...')]
+                          
+112:	proc  5 (engineThread:1) mainThreads.pml:533 (state 112)	[printf('\\n')]
+                          Finishing thread ...112:	proc  5 (engineThread:1) mainThreads.pml:546 (state 148)	[printf('Finishing thread ...')]
+                          
+112:	proc  5 (engineThread:1) mainThreads.pml:546 (state 149)	[printf('\\n')]
+113:	proc  5 (engineThread:1) mainThreads.pml:90 (state 150)	[assert(mutexInfo[0].forThread[_pid])]
+114:	proc  5 (engineThread:1) mainThreads.pml:91 (state 151)	[((mResetMutex==1))]
+114:	proc  5 (engineThread:1) mainThreads.pml:92 (state 152)	[mutexInfo[0].forThread[_pid] = 0]
+114:	proc  5 (engineThread:1) mainThreads.pml:93 (state 153)	[mResetMutex = (mResetMutex-1)]
+115:	proc  5 (engineThread:1) mainThreads.pml:90 (state 156)	[assert(mutexInfo[1].forThread[_pid])]
+116:	proc  5 (engineThread:1) mainThreads.pml:91 (state 157)	[((mThreadsMutex==1))]
+116:	proc  5 (engineThread:1) mainThreads.pml:92 (state 158)	[mutexInfo[1].forThread[_pid] = 0]
+116:	proc  5 (engineThread:1) mainThreads.pml:93 (state 159)	[mThreadsMutex = (mThreadsMutex-1)]
+                          Thread ... has finished, thread object ...116:	proc  5 (engineThread:1) mainThreads.pml:549 (state 162)	[printf('Thread ... has finished, thread object ...')]
+                          
+116:	proc  5 (engineThread:1) mainThreads.pml:549 (state 163)	[printf('\\n')]
+117:	proc  5 (engineThread:1) mainThreads.pml:551 (state 164)	[mThreads[id] = 0]		//// ВАЖНАЯ ИНФА
+118:	proc  5 (engineThread:1) mainThreads.pml:356 (state 165)	[i = 0]
+119:	proc  5 (engineThread:1) mainThreads.pml:358 (state 168)	[(((i<2)&&!(mThreads[i])))]
+119:	proc  5 (engineThread:1) mainThreads.pml:358 (state 169)	[threadId = i]
+120:	proc  5 (engineThread:1) mainThreads.pml:447 (state 178)	[temp = 0]
+121:	proc  5 (engineThread:1) mainThreads.pml:449 (state 181)	[(empty(engineThreadEvents[id]))]
+122:	proc  5 (engineThread:1) mainThreads.pml:447 (state 185)	[break]
+123:	proc  5 (engineThread:1) mainThreads.pml:557 (state 188)	[mThreadCount = (mThreadCount-1)]
+124:	proc  5 (engineThread:1) mainThreads.pml:559 (state 190)	[mFinishedThreads[id] = 1]
+125:	proc  5 (engineThread:1) mainThreads.pml:101 (state 191)	[assert((mThreadsMutex==0))]
+125:	proc  5 (engineThread:1) mainThreads.pml:102 (state 192)	[assert(!(mutexInfo[1].forThread[_pid]))]
+125:	proc  5 (engineThread:1) mainThreads.pml:103 (state 193)	[mutexInfo[1].forThread[_pid] = 1]
+125:	proc  5 (engineThread:1) mainThreads.pml:104 (state 194)	[mThreadsMutex = (mThreadsMutex+1)]
+126:	proc  5 (engineThread:1) mainThreads.pml:101 (state 197)	[assert((mResetMutex==0))]
+126:	proc  5 (engineThread:1) mainThreads.pml:102 (state 198)	[assert(!(mutexInfo[0].forThread[_pid]))]
+126:	proc  5 (engineThread:1) mainThreads.pml:103 (state 199)	[mutexInfo[0].forThread[_pid] = 1]
+126:	proc  5 (engineThread:1) mainThreads.pml:104 (state 200)	[mResetMutex = (mResetMutex+1)]
+127:	proc  5 (engineThread:1) mainThreads.pml:563 (state 203)	[(mErrorMessage)]
+128:	proc  5 (engineThread:1) mainThreads.pml:273 (state 204)	[(1)]		/////  /* Threading::reset() */
+129:	proc  5 (engineThread:1) mainThreads.pml:274 (state 205)	[(1)]
+130:	proc  5 (engineThread:1) mainThreads.pml:90 (state 206)	[assert(mutexInfo[0].forThread[_pid])]
+131:	proc  5 (engineThread:1) mainThreads.pml:91 (state 207)	[((mResetMutex==1))]
+131:	proc  5 (engineThread:1) mainThreads.pml:92 (state 208)	[mutexInfo[0].forThread[_pid] = 0]
+131:	proc  5 (engineThread:1) mainThreads.pml:93 (state 209)	[mResetMutex = (mResetMutex-1)]
+132:	proc  5 (engineThread:1) mainThreads.pml:134 (state 219)	[else]
+133:	proc  5 (engineThread:1) mainThreads.pml:134 (state 220)	[(1)]
+134:	proc  5 (engineThread:1) mainThreads.pml:279 (state 226)	[else]
+135:	proc  5 (engineThread:1) mainThreads.pml:279 (state 227)	[(1)]
+136:	proc  5 (engineThread:1) mainThreads.pml:282 (state 231)	[mResetStarted = 1]
+137:	proc  5 (engineThread:1) mainThreads.pml:101 (state 232)	[assert((mResetMutex==0))]
+137:	proc  5 (engineThread:1) mainThreads.pml:102 (state 233)	[assert(!(mutexInfo[0].forThread[_pid]))]
+137:	proc  5 (engineThread:1) mainThreads.pml:103 (state 234)	[mutexInfo[0].forThread[_pid] = 1]
+137:	proc  5 (engineThread:1) mainThreads.pml:104 (state 235)	[mResetMutex = (mResetMutex+1)]
+                          Threading: reset started137:	proc  5 (engineThread:1) mainThreads.pml:284 (state 238)	[printf('Threading: reset started')]
+                          
+137:	proc  5 (engineThread:1) mainThreads.pml:284 (state 239)	[printf('\\n')]
+											//// Остаемся внутри  /* Threading::reset() */ proc  5 
+138:	proc  4 (scriptWorkerThread:1) mainThreads.pml:595 (state 215) <valid end state>	[((mThreadCount==0))]
+139:	proc  4 (scriptWorkerThread:1) mainThreads.pml:596 (state 216)	[(1)]
+                      ScriptEngineWorker: evaluation ended with message: empty or error139:	proc  4 (scriptWorkerThread:1) mainThreads.pml:597 (state 217)	[printf('ScriptEngineWorker: evaluation ended with message: empty or error')]
+                      
+139:	proc  4 (scriptWorkerThread:1) mainThreads.pml:597 (state 218)	[printf('\\n')]
+140:	proc  4 (scriptWorkerThread:1) mainThreads.pml:83 (state 219)	[(1)]
+141:	proc  4 (scriptWorkerThread:1) mainThreads.pml:84 (state 220) <valid end state>	[GUIThreadEvents!7]
+
+												//// сигнал completed был испущен, но GUIThread не закончил обрабатывать второй runSignal:
+												
+142:	proc  2 (GUIThread:1) mainThreads.pml:249 (state 33)	[loopStopWaiting = 1]
+143:	proc  2 (GUIThread:1) mainThreads.pml:273 (state 35)	[(1)]			/* Threading::reset() */
+144:	proc  2 (GUIThread:1) mainThreads.pml:274 (state 36)	[(1)]
+145:	proc  2 (GUIThread:1) mainThreads.pml:90 (state 37)	[assert(mutexInfo[0].forThread[_pid])]
+146:	proc  2 (GUIThread:1) mainThreads.pml:91 (state 38)	[((mResetMutex==1))]
+146:	proc  2 (GUIThread:1) mainThreads.pml:92 (state 39)	[mutexInfo[0].forThread[_pid] = 0]
+146:	proc  2 (GUIThread:1) mainThreads.pml:93 (state 40)	[mResetMutex = (mResetMutex-1)]
+147:	proc  2 (GUIThread:1) mainThreads.pml:133 (state 43)	[(mResetStarted)]
+148:	proc  2 (GUIThread:1) mainThreads.pml:101 (state 44)	[assert((mResetMutex==0))]
+148:	proc  2 (GUIThread:1) mainThreads.pml:102 (state 45)	[assert(!(mutexInfo[0].forThread[_pid]))]
+148:	proc  2 (GUIThread:1) mainThreads.pml:103 (state 46)	[mutexInfo[0].forThread[_pid] = 1]
+148:	proc  2 (GUIThread:1) mainThreads.pml:104 (state 47)	[mResetMutex = (mResetMutex+1)]
+149:	proc  2 (GUIThread:1) mainThreads.pml:278 (state 55)	[(mResetStarted)]
+150:	proc  2 (GUIThread:1) mainThreads.pml:309 (state 123)	[(1)]			////* выходим, так как threading_reset_return */
+151:	proc  2 (GUIThread:1) mainThreads.pml:347 (state 125)	[mState = 0]	//// mState = ready;
+              ScriptEngineWorker: stopping complete152:	proc  2 (GUIThread:1) mainThreads.pml:349 (state 126)	[printf('ScriptEngineWorker: stopping complete')]
+              
+152:	proc  2 (GUIThread:1) mainThreads.pml:349 (state 127)	[printf('\\n')]
+153:	proc  2 (GUIThread:1) mainThreads.pml:350 (state 128)	[(1)]
+              ScriptEngineWorker: starting script153:	proc  2 (GUIThread:1) mainThreads.pml:635 (state 130)	[printf('ScriptEngineWorker: starting script')]
+              
+153:	proc  2 (GUIThread:1) mainThreads.pml:635 (state 131)	[printf('\\n')]
+154:	proc  2 (GUIThread:1) mainThreads.pml:636 (state 132)	[mState = 1]	//// mState = starting; а только что было mState = ready;
+155:	proc  2 (GUIThread:1) mainThreads.pml:639 (state 133)	[RunningWidget = 1]
+156:	proc  2 (GUIThread:1) mainThreads.pml:640 (state 134)	[(1)]
+157:	proc  2 (GUIThread:1) mainThreads.pml:643 (state 136)	[threadId = 0]
+158:	proc  2 (GUIThread:1) mainThreads.pml:221 (state 137)	[assert((2>0))]
+158:	proc  2 (GUIThread:1) mainThreads.pml:223 (state 138)	[i = 0]
+159:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 139)	[((i<2))]
+159:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 140)	[abortEvaluationInvoked[i] = 0]
+159:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 141)	[i = (i+1)]
+160:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 139)	[((i<2))]
+160:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 140)	[abortEvaluationInvoked[i] = 0]
+160:	proc  2 (GUIThread:1) mainThreads.pml:224 (state 141)	[i = (i+1)]
+161:	proc  2 (GUIThread:1) mainThreads.pml:225 (state 142)	[((i==2))]
+162:	proc  2 (GUIThread:1) mainThreads.pml:83 (state 149)	[(1)]
+163:	proc  2 (GUIThread:1) mainThreads.pml:84 (state 150) <valid end state>	[scriptWorkerThreadEvents!8]
+164:	proc  4 (scriptWorkerThread:1) mainThreads.pml:579 (state 1)	[scriptWorkerThreadEvents?signal]
+165:	proc  4 (scriptWorkerThread:1) mainThreads.pml:581 (state 2)	[((signal==INVOKEdoRun))]
+spin: mainThreads.pml:584, Error: assertion violated
+spin: text of failed assertion: assert(!(mInEventDrivenMode))
+166:	proc  4 (scriptWorkerThread:1) mainThreads.pml:584 (state 3)	[assert(!(mInEventDrivenMode))]
+																	//// Таким образом, если завершение run() для исполненного скрипта затянется по
+																	//// каким-то причинам, то mInEventDrivenMode == true, для нового скрипта
+spin: trail ends after 166 steps
+#processes: 6
+		mState = 1
+		mInEventDrivenMode = 1
+		mResetMutex = 1
+		mResetStarted = 1
+		mThreadsMutex = 1
+		mFinishedThreads[0] = 1
+		mFinishedThreads[1] = 0
+		mPreventFromStart[0] = 0
+		mPreventFromStart[1] = 0
+		mThreads[0] = 0
+		mThreads[1] = 0
+		threadId = 0
+		queue 1 (GUIThreadEvents): [completed]
+		queue 2 (scriptWorkerThreadEvents): 
+		queue 5 (engineThreadEvents[0]): 
+		queue 6 (engineThreadEvents[1]): 
+		abortEvaluationInvoked[0] = 0
+		abortEvaluationInvoked[1] = 0
+		mThreadCount = 0
+		timerTimeout = 0
+		loopStopWaiting = 1
+		mErrorMessage = 1
+		isAutonomousCycle[0] = 0
+		isAutonomousCycle[1] = 0
+		RunningWidget = 1
+		mutexInfo[0].forThread[0] = 1
+		mutexInfo[0].forThread[1] = 1
+		mutexInfo[0].forThread[2] = 1
+		mutexInfo[0].forThread[3] = 1
+		mutexInfo[0].forThread[4] = 1
+		mutexInfo[0].forThread[5] = 1
+		mutexInfo[0].forThread[6] = 1
+		mutexInfo[0].forThread[7] = 1
+		mutexInfo[0].forThread[8] = 1
+		mutexInfo[1].forThread[0] = 1
+		mutexInfo[1].forThread[1] = 1
+		mutexInfo[1].forThread[2] = 1
+		mutexInfo[1].forThread[3] = 1
+		mutexInfo[1].forThread[4] = 1
+		mutexInfo[1].forThread[5] = 1
+		mutexInfo[1].forThread[6] = 1
+		mutexInfo[1].forThread[7] = 1
+		mutexInfo[1].forThread[8] = 1
+166:	proc  5 (engineThread:1) mainThreads.pml:88 (state 245)
+166:	proc  4 (scriptWorkerThread:1) mainThreads.pml:585 (state 4)
+166:	proc  3 (User:1) mainThreads.pml:680 (state 17) <valid end state>
+166:	proc  2 (GUIThread:1) mainThreads.pml:626 (state 301) <valid end state>
+166:	proc  1 (ExceptionHandler:1) mainThreads.pml:685 (state 5) <valid end state>
+166:	proc  0 (:init::1) mainThreads.pml:705 (state 4) <valid end state>
+6 processes created
+
+---------------------------------------------------------------------------------------------------------------------------------
+------------- Итог: mInEventDrivenMode должен быть равен false в начале исполнения doRun, иначе ---------------------------------
+------------- это значение может повлиять на исполнение следующих скриптов. -----------------------------------------------------
+------------- Верификатор выдал контрпример, который может произойти на реальной системе, ---------------------------------------
+------------- если команды запуска делать через нажатие кнопки && через коннект, ------------------------------------------------
+------------- в скрипте должен быть выполнен script.run(), и далее надо попробовать создать существующий поток ------------------
+------------- и/или закончить скрипт с непредвиденной ошибкой. Тогда может получиться так, что к запуску ------------------------
+------------- следующего файла mInEventDrivenMode будет равен true, а это плохо. Вероятность этого очень мала.   ----------------
+------------- Возможное решение - в начале исполнения нового файле присваивать mInEventDrivenMode значение false. ---------------
+---------------------------------------------------------------------------------------------------------------------------------
+------------- P.s. описанный выше конпример немного отличается от итога, но суть одна. ------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+------------- Стоит отметить на этом примере, что не стоит заканчивать scriptEngine, если не закончены все run-ы ----------------
+------------- у ScriptThreads, то есть они живы. --------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------

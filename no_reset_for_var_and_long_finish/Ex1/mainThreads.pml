@@ -2,7 +2,7 @@
 //#define NO_LOGGING // только для QLOG_INFO()
 #define S 2 // максимальное количество запущенных скриптов (engineThreads) S < 256
 #define N 3 // максимальная длина очереди event-ов для каждого потока N < 256
-#define MaxThreadCount 10 // максимальное ожидамое кол-во активных процессов в модели (неообходимо для ускорения верификации)
+#define MaxThreadCount 9 // максимальное ожидамое кол-во активных процессов в модели (неообходимо для ускорения верификации)
 
 #ifndef NO_LOGGING
  #define LOG(x) printf(x); printf("\n")
@@ -414,7 +414,7 @@ inline startThread() /* Threading::startThread(...) --- в этом методе
 	mFinishedThreads[myThread] = 0;
 	unlock(mThreadsMutex, _mThreadsMutex, _pid);
 	run engineThread(myThread);
-	/* connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater())); моделируется просто выходом из ScriptThread::run(); */
+	// connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater())); - надо ли?
 	emit(engineThreadEvents[myThread], start); /* Мы переопределяли run(), поэтому отдельно расписываем thread->start() */
 	/* finite cycle removed */
 	LOG("Threading: started thread ... with engine ... thread object ...");
@@ -497,7 +497,6 @@ proctype connectionsThread() /* обслуживание клиента TrikComm
 
 proctype engineThread(byte id) /* id остаётся одинаковым на всё время жизни треда */
 {
-	// byte commands = 200; /* пусть будет максимум команд в скрипте */
 	chan tmpQueue = [N] of {mtype}; /* необходимый для моделирования и проверок канал */
 	mtype signal;
 	engineThreadEvents[id] ? signal -> /* цикла нет! (так как не запущен exec()) */
@@ -511,16 +510,16 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 		progress: do /* в данной модели забиваем тут на brick, gamepad, mailbox из createScriptEngine */
 		:: !abortEvaluationInvoked[id] -> /* если не был вызван аборт исполнения скрипта */
 			if
-			::	//mThreadCount < S ->
-				evalSystemJs();
-				copyRecursivelyTo: skip; /* рекурсивное копирование, _знаем_, что не бесконечное */
-				evalSystemJs();
-				startThread(); /* параметр моделируем через недетерминизм, кол-во тредов ограничиваем сами или run()-ом */
-			:: joinThread(id); /* параметр моделируем через недетерминизм */
+			//:: 
+			//	evalSystemJs();
+			//	copyRecursivelyTo: skip; /* рекурсивное копирование, _знаем_, что не бесконечное */
+			//	evalSystemJs();
+			//	startThread(); /* параметр моделируем через недетерминизм, кол-во тредов ограничиваем сами или run()-ом */
+			//:: joinThread(id); /* параметр моделируем через недетерминизм */
 			:: killThread(); /* параметр моделируем через недетерминизм */
 			// :: sendMessage();
 			// :: receiveMessage();
-			:: script_quit();
+			// :: script_quit();
 			:: script_run();
 			:: script_wait(); // вообще можно проверить свойства, что в скрипте можно написать хрень, из-за которой что-то произойдет O_o
 			// WARNING: можно испускать сигналы из ScriptExecutionControl.
@@ -580,6 +579,8 @@ proctype scriptWorkerThread()
 	:: scriptWorkerThreadEvents ? signal ->
 		if 
 		:: signal == INVOKEdoRun ->
+			//assert(mResetMutex);
+			//assert(mThreadsMutex);
 			assert(!mInEventDrivenMode); /* mInEventDrivenMode должен быть false для нового скрипта! аналогично можно проверить с помощью LTL для всех переменных */
 			doRunInvoked: mErrorMessage = false;
 			clear(mFinishedThreads, S);
