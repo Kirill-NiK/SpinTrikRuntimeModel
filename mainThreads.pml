@@ -1,8 +1,11 @@
 /* SPIN-ом выдаваемая ошибка (например, при spin -a mainThreads.pml) типа "... missing array index ..." - это известный баг, но он никак не влияет на работу верификатора */
-//#define NO_LOGGING // только для QLOG_INFO()
-#define S 3 // максимальное количество запущенных скриптов (engineThreads) S < 256
-#define N 4 // максимальная длина очереди event-ов для каждого потока N < 256
-#define MaxThreadCount 10 // максимальное ожидамое кол-во активных процессов в модели (неообходимо для ускорения верификации)
+// #define NO_LOGGING // только для QLOG_INFO()
+/* максимальное количество запущенных скриптов (engineThreads) S < 256 */
+#define S 3
+/* максимальная длина очереди event-ов для каждого потока N < 256 */
+#define N 4
+/* максимальное ожидамое кол-во активных процессов в модели (неообходимо для ускорения верификации) */
+#define MaxThreadCount 10
 
 #ifndef NO_LOGGING
  #define LOG(x) printf(x); printf("\n")
@@ -25,15 +28,6 @@
 
 /* ниже будут описаны дефайны для LTL-формул */
 /* проблема использования labels в некоторых случаях состоит в неизвестном кол-ве engineThreads */
-#define p1 GUIThread@showError
-#define q1 mErrorMessage
-/* определяемые ниже метки для проверки необходимого свойства нужно проверить снова при расширении модели User-ом */
-#define p2 scriptWorkerThread@doRunInvoked
-#define q2 scriptWorkerThread@completedEmitted
-/* r2 можно переделать, но для S==2 пойдет */
-#define r2 (isAutonomousCycle[0] || isAutonomousCycle[1])
-#define p3 mInEventDrivenMode
-#define p4 mState != starting 
 
 byte mState = ready; /* ScriptEngineWorker:state */
 bool mInEventDrivenMode = false; /* находится в ScriptExecutionControl, True, if a system is in this mode, so it shall wait for events when script is executed. (c) */
@@ -54,22 +48,20 @@ chan GUIThreadEvents = [N] of {mtype};
 chan connectionsThreadEvents = [N] of {mtype};
 chan sensorsThreadEvents = [N] of {mtype};
 chan scriptWorkerThreadEvents = [N] of {mtype};
-chan engineThreadEvents [S] = [N] of {mtype}; // можно смоделировать удаление mEngine->deleteLater();, а в других методах return mEngine->isEvaluating(); нет проверки.
+chan engineThreadEvents [S] = [N] of {mtype}; 
+/* проверка того, что после удаления mEngine не используется mEngine-> проверяется легко (не включено в модель) */
 
 mtype {FailedToOpenFileException, returnControl}; /* бросаемые исключения и возврат из обработчика (returnControl) */
 chan catch = [0] of {mtype}; /* рандеву-канал, эмулирующий обработку вызванных исключений */
 
 bit abortEvaluationInvoked[S] = 0; /* массив, который обозначает, что engine->abortEvaluation() была вызвана */
 
-byte mThreadCount = 0; /* число engine-потоков */
+byte mThreadCount = 0; /* число engine-потоков, используется только в модели */
 
 bool timerTimeout = false; /* флаги, моделирующие ивенетлуп в ScriptExecutionControl::wait */
 bool loopStopWaiting = false; /* флаги, моделирующие ивенетлуп в ScriptExecutionControl::wait */
 
 bool mErrorMessage = false; /* флаг, который будет true, если mErrorMessage в программе непустой */
-
-bool isAutonomousCycle[S] = false; /* массив флагов, сигнализирующий, что какой-то из потоков может находиться в бесконечном цикле ожидания */
-//bool autonomousCycleExists = false;
 
 bool RunningWidget = false; /* флаг для модели, показывающий, что RunnungWidget запущен */
 
@@ -82,7 +74,7 @@ mutexes mutexInfo[MutexCount]; /* матрица, чтоб проверять к
 
 inline emit(thread, signal) /* в очередь событий \a thread добавить сигнал (событие) \a signal, _ВНИМАНИЕ_: последовательно добавляем в очередь */
 {
-	true;//???assert(nfull(thread)); /* Если копятся ивенты, значит что-то пошло не так... */
+	printf("emit");
 	endQueue: thread ! signal; // точно так можно сделать? мб копипастить стоит?
 }
 
@@ -93,7 +85,8 @@ inline lock(_s, __s, _thread) /* блокировка мьютекса в опр
 		_s == 1 ->
 		mutexInfo[__s].forThread[_thread] = 0;
 		_s--;
-	}; 
+		printf("locked\n");
+	};
 }
 
 inline unlock(_s, __s, _thread) /* разблокировка мьютекса в определенном потоке */
@@ -104,6 +97,7 @@ inline unlock(_s, __s, _thread) /* разблокировка мьютекса �
 		assert(!mutexInfo[__s].forThread[_thread]); /* попытка разблочить мьютекс из потока, где этот мьютекс не был заблочен */
 		mutexInfo[__s].forThread[_thread] = 1;
 		_s++;
+		printf("unlocked\n");
 	};
 }
 
@@ -125,6 +119,7 @@ inline random(min, max, x) /* рандомное число записывает
 			fi;
 		:: x == max -> break;
 		od;
+		printf("random_return\n");
 	};
 }
 
@@ -145,7 +140,7 @@ inline abort(thrId) /* ScriptThread::abort() для конкретного на�
 
 inline joinThread(idT) /* Threading::joinThread(const QString &threadId) */ // разобраться, почему есть прогресс
 {
-	true; /* костыль для использования метки в начале inline, взято из официальной документации */
+	printf("joinThread_call\n");
 	joinThread_call: skip;
 	short tmp;
 	random(-1, S - 1, tmp);
@@ -170,12 +165,13 @@ inline joinThread(idT) /* Threading::joinThread(const QString &threadId) */ // �
 	:: tmp != idT -> endInfiniteJoin: !mThreads[tmp];
 	:: else -> LOG("QThread::wait: Thread tried to wait on itself"); /* данное сообщение выводится не в логе Q_LOG */
 	fi;
-	joinThread_return: skip;	
+	joinThread_return: skip;
+	printf("joinThread_return\n");
 }
 
 inline killThread() /* Threading::killThread(const QString &threadId) */
 {
-	true; /* костыль для использования метки в начале inline, взято из официальной документации */
+	printf("killThread_call\n");
 	killThread_call: skip;
 	tryLockReset();
 	if 
@@ -198,12 +194,12 @@ inline killThread() /* Threading::killThread(const QString &threadId) */
 	:: else ->
 		LOG("Threading: killing thread ...");
 		/* ScriptThread::abort() */
-		// так как множественный stopRunning не падает в реальной модели, запретим "лишние" emits?
 		abort(tmp);
 	fi;
 	unlock(mThreadsMutex, _mThreadsMutex, _pid);
 	unlock(mResetMutex, _mResetMutex, _pid);
 	killThread_return: skip;
+	printf("killThread_return\n");
 }
 
 inline clear(_arr, _len) /* обнуляет массив длиной _len */
@@ -215,16 +211,19 @@ inline clear(_arr, _len) /* обнуляет массив длиной _len */
 		:: i < _len -> _arr[i] = 0; i++;
 		:: i == _len -> break;
 		od;
+		printf("cleared\n");
 	};
 }
 
 inline script_run() /* ScriptExecutionControl::run() */
 {
+	printf("script_run\n");
 	mInEventDrivenMode = true;
 }
 
 inline script_wait() /* ScriptExecutionControl::wait(const int &milliseconds) */
 {
+	printf("script_wait\n");
 	/* по сути объявления loopStopWaiting и timerTimeout ниже означают места объявлений коннектов в реальной программе */
 	loopStopWaiting = false;
 	timerTimeout = true; /* это означает в модели, что мы указали достаточно большое время, за которое может произойти многое */ // timerTimeout = true это временный фикс одного бага
@@ -234,6 +233,7 @@ inline script_wait() /* ScriptExecutionControl::wait(const int &milliseconds) */
 
 inline script_reset() /* ScriptExecutionControl::reset() */
 {
+	printf("script_reset\n");
 	mInEventDrivenMode = false;
 	loopStopWaiting = true;
 	/* удаление конечного числа таймеров */
@@ -241,6 +241,7 @@ inline script_reset() /* ScriptExecutionControl::reset() */
 
 inline script_quit() /* ScriptExecutionControl::quit() */
 {
+	printf("script_quit\n");
 	/* два коннекта - direct с сигналом и auto со слотом */
 	byte runningThread = 0; // можно сделать стоп раннинг в случайном порядке. надо?
 	do /* --- с сигналом, по всем потокам вызываем stopRunning */
@@ -259,7 +260,7 @@ inline script_quit() /* ScriptExecutionControl::quit() */
 
 inline printCommand() /* это тот print(), который регистрируется так: registerUserFunction("print", print); */
 {
-	true; /* костыль для использования метки в начале inline, взято из официальной документации */
+	printf("printCommand\n");
 	/* finite cycle removed */
 	/* QTextStream(stdout) << result << "\n"; --- полагаем. что ошибок быть не может, это вывод текста в стандартный вывод */
 	evaluateScriptSendMessage_call: skip;
@@ -271,7 +272,7 @@ inline printCommand() /* это тот print(), который регистри�
 
 inline threading_reset() /* Threading::reset() */
 {
-	true; /* костыль для использования метки в начале inline, взято из официальной документации */
+	printf("threading_reset_call\n");
 	threading_reset_call: skip;
 	atomic {
 		tryLockReset(); // ВНИМАНИЕ: atomic здесь - временный фикс
@@ -308,12 +309,14 @@ inline threading_reset() /* Threading::reset() */
 	LOG("Threading: reset ended");
 	mResetStarted = false;
 	threading_reset_return: skip;
+	printf("threading_reset_return\n");
 }
 
-inline brick_reset() /* Brick::reset() */ // очень опасный метод!!!! Очень много вызывается проверок, мьютексов и т.д. при остановке.
+inline brick_reset() /* Brick::reset() */ // очень опасный метод!!!! Очень много вызывается проверок, блокировок мьютексов и т.д. при остановке.
 {
+	printf("brick_reset_call\n");
+	brick_reset_call: skip; /* остановка по всем сенсорам, дисплею... */
 	LOG("Stopping brick");
-	brikReset: skip; /* остановка по всем сенсорам, дисплею... */
 	// возможно, отдельно стоит расписать для Keys->reset(), так как там есть lock() и внезапно, запуск может не сработать?
 	// для дисплея:
 	do // должно дополняться любыми INVOKE-ами, отправленными к GUIWorker-у
@@ -325,17 +328,18 @@ inline brick_reset() /* Brick::reset() */ // очень опасный мето�
 	//	rangeSensor->init();
 	//}
 	brick_reset_return: skip;
+	printf("brick_reset_return\n");
 }
 
 inline stopScript()
 {
-	true; /* костыль для использования метки в начале inline, взято из официальной документации */
+	printf("stopScript_call\n");
 	stopScript_call: skip;
 	if
 	:: mState == stopping -> goto stopScript_return;
 	:: mState == ready -> goto stopScript_return;
 	:: mState == running -> skip;
-	:: mState == starting -> mStateStarting: mState != starting; /* -> mState != starting означает цикл, ожидание */ // проверить, что не существует []этой метки
+	:: mState == starting -> mStateStarting: mState != starting; /* -> mState != starting означает цикл, ожидание */
 		/// Some script is starting right now, so we are in inconsistent state. Let it start, then stop it. (с)
 	:: else -> assert(false); /* mState в программе других состояний не имеет */
 	fi;
@@ -349,6 +353,7 @@ inline stopScript()
 	/// @todo: is it actually stopped? (c)
 	LOG("ScriptEngineWorker: stopping complete");
 	stopScript_return: skip;
+	printf("stopScript_return\n");
 }
 
 inline findFreeThreadId() /* только тут меняется threadId и он равен или -1 или самому левому индексу в mThreads, который не занят */
@@ -363,7 +368,7 @@ inline findFreeThreadId() /* только тут меняется threadId и о
 
 inline startThread() /* Threading::startThread(...) --- в этом методе не важно, что за имя треда и функции нам передают, поэтому выбираем недетерминированно */
 {
-	true; /* костыль для использования метки в начале inline, взято из официальной документации */
+	printf("startThread_call\n");
 	startThread_call: skip;
 	short tmp;
 	random(-1, S - 1, tmp);
@@ -421,10 +426,12 @@ inline startThread() /* Threading::startThread(...) --- в этом методе
 	LOG("Threading: started thread ... with engine ... thread object ...");
 	unlock(mResetMutex, _mResetMutex, _pid);
 	startThread_return: skip;
+	printf("startThread_return\n");
 }
 
 inline evalSystemJs() /* ScriptEngineWorker::evalSystemJs */
 {
+	printf("evalSystemJs_call\n");
 	if /* QFile::exists(systemJsPath) */
 	::
 		/* FileUtils::readFromFile(const QString &fileName) */
@@ -439,6 +446,7 @@ inline evalSystemJs() /* ScriptEngineWorker::evalSystemJs */
 	:: LOG("ERROR: system.js not found, path: ...");
 	fi;
 	/* finite cycle removed */
+	printf("evalSystemJs_return\n");
 }
 
 inline removePostedEvents(queue) /* очистить посланные события из очереди событий \a queue */
@@ -524,7 +532,7 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 			:: printCommand();
 			:: script_quit();
 			:: script_run();
-			:: script_wait(); // вообще можно проверить свойства, что в скрипте можно написать хрень, из-за которой что-то произойдет O_o
+			:: script_wait();
 			:: mErrorMessage = true; break; /* непредвиденная ошибка */
 			:: break; /* конец скрипта */
 			fi;
@@ -532,25 +540,24 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 		od;
 		evaluate_return: skip;
 		if /* mEngine->hasUncaughtException() */
-		:: mErrorMessage -> LOG("Uncaught exception at line ..."); // изменили модель, добавив проверку на непустоту mErrorMessage чтоб "поправить ошибку"
+		:: mErrorMessage -> LOG("Uncaught exception at line ..."); // ВНИМАНИЕ: изменили модель, добавив проверку на непустоту mErrorMessage чтоб "поправить ошибку"
 		:: else ->
 			if
 			:: mInEventDrivenMode -> 
 				atomic {
 					checkUnhandledSignals(stopRunning, engineThreadEvents[id]); /* здесь вызывается необходимый коннект, проверим, что эмитов, нужных после, до этого не было */
-					isAutonomousCycle[id] = true; endRun: engineThreadEvents[id] ? stopRunning; isAutonomousCycle[id] = false; /* пойдет дальше, если stopRunning был испущен */
+					endRun: engineThreadEvents[id] ? stopRunning; /* пойдет дальше, если stopRunning был испущен */
 				};
 			:: else -> skip;
 			fi;
 		fi;
-		// mEngine->deleteLater(). можно послать соответствующий сигнал. который на обработке просто поставит метку deleted. - вообще мб удаление именно стоит проверить?
 		/* Threading::threadFinished(...) */
 		LOG("Finishing thread ...");
 		lock(mResetMutex, _mResetMutex, _pid);
 		lock(mThreadsMutex, _mThreadsMutex, _pid);
 		LOG("Thread ... has finished, thread object ...");
 		atomic {
-			mThreads[id] = 0; 
+			mThreads[id] = 0;
 			findFreeThreadId();
 			removePostedEvents(engineThreadEvents[id]);
 			// assert(empty(engineThreadEvents[id])); 
@@ -587,7 +594,6 @@ proctype scriptWorkerThread()
 			clear(mPreventFromStart, S);
 			timerTimeout = false; /* не забываем скинуть в начальное состояние все флаги в модели на момент исполнения */
 			loopStopWaiting = false; /* не забываем скинуть в начальное состояние все флаги в модели на момент исполнения */
-			clear(isAutonomousCycle, S); /* не забываем скинуть в начальное состояние все флаги в модели на момент исполнения */
 			evalSystemJs();
 			startThread();
 			mState = running;
@@ -612,8 +618,8 @@ proctype GUIThread()
 	LOG("TrikGui started");
 	mInEventDrivenMode = false;
 	RunningWidget = false;
-	//	run sensorsThread(); /* см. Controller */
-	//	run connectionsThread(); /* см. Controller */
+	// run sensorsThread(); /* см. Controller */
+	// run connectionsThread(); /* см. Controller */
 	// подумать, что делать с удалением через signal finished
 	// тут достаточно коннектов в конструкторе, которые стоит включить
 	// возможно, что-то по коннектам стоит глянуть в backgroundWidget и Controller
@@ -669,18 +675,14 @@ proctype User() /* процесс, который моделирует возм�
 	:: emit(GUIThreadEvents, runScript);
 	:: emit(GUIThreadEvents, abortScript);
 	fi;
-//	if
-//	:: emit(GUIThreadEvents, runScript);
-//	:: emit(GUIThreadEvents, abortScript);
-//	fi;
-//	if // дополнительно - если хватит ресурсов компьютера проверить
-//	:: emit(GUIThreadEvents, runScript); // проверить, все ли необходимые дефолтные значения возвращатся при перезапуске
-//	:: emit(GUIThreadEvents, abortScript);
-//	fi;
+	if
+	:: emit(GUIThreadEvents, runScript);
+	:: emit(GUIThreadEvents, abortScript);
+	fi;
 }
 
 proctype ExceptionHandler() /* процесс, который моделирует обработку исключений */
-/* второй способ моделирования --- переходить по меткам goto внутри proctype */
+/* переходим по меткам goto внутри proctype, в котором брошено исключение, для моделирования перехода в место, где вызван try */
 {
 	end: progress: do
 	::
