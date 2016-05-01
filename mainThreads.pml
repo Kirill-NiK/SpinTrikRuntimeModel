@@ -3,9 +3,9 @@
 /* максимальное количество запущенных скриптов (engineThreads) S < 256 */
 #define S 3
 /* максимальная длина очереди event-ов для каждого потока N < 256 */
-#define N 4
-/* максимальное ожидамое кол-во активных процессов в модели (неообходимо для ускорения верификации) */
-#define MaxThreadCount 10
+#define N 3
+/* максимальное ожидамое кол-во активных процессов в модели (неообходимо для ускорения верификации) (S + 5) */
+#define MaxThreadCount 7
 
 #ifndef NO_LOGGING
  #define LOG(x) printf(x); printf("\n")
@@ -162,7 +162,7 @@ inline joinThread(idT) /* Threading::joinThread(const QString &threadId) */ // �
 	unlock(mThreadsMutex, _mThreadsMutex, _pid);
 	if 
 	// вообще, это неаккуратно, вдруг на mThreads[tmp] запишется другой тред, но правка приведет к сильному усложнению модели, поэтому допускаем такое вычисление.
-	:: tmp != idT -> endInfiniteJoin: !mThreads[tmp];
+	:: tmp != idT -> endInfiniteJoin: !mThreads[tmp]; /* метка end, так как пусть пользователь сам решает, хочет ли он ждать бесконечно */ // ну или пока не пофиксим
 	:: else -> LOG("QThread::wait: Thread tried to wait on itself"); /* данное сообщение выводится не в логе Q_LOG */
 	fi;
 	joinThread_return: skip;
@@ -226,7 +226,7 @@ inline script_wait() /* ScriptExecutionControl::wait(const int &milliseconds) */
 	printf("script_wait\n");
 	/* по сути объявления loopStopWaiting и timerTimeout ниже означают места объявлений коннектов в реальной программе */
 	loopStopWaiting = false;
-	timerTimeout = true; /* это означает в модели, что мы указали достаточно большое время, за которое может произойти многое */ // timerTimeout = true это временный фикс одного бага
+	timerTimeout = true; /* false означает, что мы указали достаточно большое время, за которое может произойти многое */ // timerTimeout = true это временный фикс одного бага
 	/* можно смоделировать более детально, но затратно по ресурсам: */
 	endLoop: timerTimeout || loopStopWaiting; /* loop.exec(); */
 }
@@ -248,7 +248,7 @@ inline script_quit() /* ScriptExecutionControl::quit() */
 	:: runningThread < S ->
 		if 
 		:: mThreads[runningThread] ->
-			endUselessCalls: emit(engineThreadEvents[runningThread], stopRunning); 
+			emit(engineThreadEvents[runningThread], stopRunning);
 		:: else -> skip;
 		fi;
 		runningThread++;
@@ -385,7 +385,7 @@ inline startThread() /* Threading::startThread(...) --- в этом методе
 	if 
 	:: (tmp != -1) && (mThreads[tmp]) -> /* если тред такой уже существует */
 		LOG("ERROR: Threading: attempt to create a thread with an already occupied id");
-		mErrorMessage = true;
+		mErrorMessage = false; // временный фикс - в реальной системе потому что так (разделение ошибок непредвиденных и как тут <-)
 		abort(tmp);
 		unlock(mThreadsMutex, _mThreadsMutex, _pid);
 		unlock(mResetMutex, _mResetMutex, _pid);
@@ -406,8 +406,10 @@ inline startThread() /* Threading::startThread(...) --- в этом методе
 	short myThread;
 	atomic {
 		if
-		:: threadId == -1 -> unlock(mThreadsMutex, _mThreadsMutex, _pid); unlock(mResetMutex, _mResetMutex, _pid); goto startThread_return; /* искусственно запрещаем создавать больше S тредов */
-		:: threadId != -1 -> skip;
+		:: threadId == -1 || _nr_pr == MaxThreadCount -> unlock(mThreadsMutex, _mThreadsMutex, _pid); unlock(mResetMutex, _mResetMutex, _pid); goto startThread_return;
+			/* искусственно запрещаем создавать больше S engineThread тредов */
+		:: threadId != -1 && _nr_pr < MaxThreadCount -> skip;
+			/* Важно: использование _nr_pr связано с _ограничением_ на работу реальной системы! в реальной системе рано или поздно исполнение mEngineThread закончится */
 		fi;
 		myThread = threadId;
 		mThreads[myThread] = 1;
@@ -416,10 +418,11 @@ inline startThread() /* Threading::startThread(...) --- в этом методе
 		assert(mThreadCount <= S); /* Изначально мы считаем, что максимальное количество запущенных потоков engineThread ограничено */
 		assert(mThreadCount >= 1)
 		findFreeThreadId();
+		run engineThread(myThread); /* осуществили перенос (***), так как тогда _nr_pr изменится в atomic корректно, и не будет переполнений массивов */
 	};
 	mFinishedThreads[myThread] = 0;
 	unlock(mThreadsMutex, _mThreadsMutex, _pid);
-	run engineThread(myThread);
+	//run engineThread(myThread); (***)
 	/* connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater())); моделируется просто выходом из ScriptThread::run(); */
 	emit(engineThreadEvents[myThread], start); /* Мы переопределяли run(), поэтому отдельно расписываем thread->start() */
 	/* finite cycle removed */
@@ -436,7 +439,7 @@ inline evalSystemJs() /* ScriptEngineWorker::evalSystemJs */
 	::
 		/* FileUtils::readFromFile(const QString &fileName) */
 		if /* (!file.isOpen()) */
-		:: throw(FailedToOpenFileException); catch ? returnControl; /* catch ? returnControl; необходим для возврата управления */
+		:: throw(FailedToOpenFileException); catch ? returnControl; /* catch ? returnControl; необходим для возврата управления (если try в другом месте, use goto) */
 		:: skip;
 		fi;
 		if /* (engine->hasUncaughtException()) */
@@ -504,10 +507,11 @@ proctype connectionsThread() /* обслуживание клиента TrikComm
 	od;
 }
 
+//byte commands = 5; /* пусть будет максимальное кол-во команд в скрипте */
+
 proctype engineThread(byte id) /* id остаётся одинаковым на всё время жизни треда */
 {
-	// byte commands = 200; /* пусть будет максимальное кол-во команд в скрипте */
-	chan tmpQueue = [N] of {mtype}; /* необходимый для моделирования и проверок канал */
+	chan tmpQueue = [N] of {mtype}; /* необходимый для моделирования и проверок канал (используется в inlines) */
 	mtype signal;
 	engineThreadEvents[id] ? signal -> /* цикла нет! (так как не запущен exec()) */
 	if
@@ -559,10 +563,7 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 		atomic {
 			mThreads[id] = 0;
 			findFreeThreadId();
-			removePostedEvents(engineThreadEvents[id]);
-			// assert(empty(engineThreadEvents[id])); 
-			// NOTE: это ведь плохо, если перед удалением у нас висят какие-то ивента в ивентлупе?...
-			// но, возможно, нет. так как они мб не обрабатываются. тогда нужно тут очищать очередь. (это сейчас реализовано)
+			removePostedEvents(engineThreadEvents[id]); /* очищаем, так как события для удаленного потока не обрабатываются (на данный момент такая система) */
 			mThreadCount--;
 		};
 		mFinishedThreads[id] = 1; // FIXME: тут если в цикле создаются треды и тут же удаляются?
@@ -578,7 +579,6 @@ proctype engineThread(byte id) /* id остаётся одинаковым на 
 		assert(false); /* не должен быть сигнал stopRunning до старта */
 	fi;
 	exit: skip;
-	//>>>?assert(empty(engineThreadEvents[id])); /* логично, если "лишних" сигналов не будет */
 }
 
 proctype scriptWorkerThread()
@@ -679,6 +679,8 @@ proctype User() /* процесс, который моделирует возм�
 	:: emit(GUIThreadEvents, runScript);
 	:: emit(GUIThreadEvents, abortScript);
 	fi;
+	end1: _nr_pr == MaxThreadCount - S + 1; /* этот хак из 2х строчек в модели, чтоб удержать 5 процессов (чтоб _nr_pr было минимум 5 пока не закончатся engineThreads) */
+	end2: _nr_pr == MaxThreadCount - S;
 }
 
 proctype ExceptionHandler() /* процесс, который моделирует обработку исключений */
@@ -704,4 +706,6 @@ init
 	run ExceptionHandler();
 	run GUIThread();
 	run User();
+	end1: _nr_pr == MaxThreadCount - S + 1; /* этот хак из 2х строчек в модели, чтоб удержать 5 процессов (чтоб _nr_pr было минимум 5 пока не закончатся engineThreads) */
+	end2: _nr_pr == MaxThreadCount - S;
 }
